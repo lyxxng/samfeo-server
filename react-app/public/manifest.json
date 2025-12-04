@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "SAMFEO Server",
+  "name": "SAMFEO Web Server",
   "icons": [
     {
       "src": "favicon.ico",
