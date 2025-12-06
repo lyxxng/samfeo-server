@@ -7,7 +7,7 @@ export default function App() {
     <Container fluid className="App">
       <Header />
       <Container>
-        <InputPage></InputPage>
+        <InputPage />
       </Container>
     </Container>
   );

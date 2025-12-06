@@ -1,12 +1,14 @@
 import Form from 'react-bootstrap/Form';
 
 export default function InputField(
-    { name, label, type, value, error, fieldRef }
+    { name, label, as, rows, type, value, error, fieldRef }
 ) {
     return (
         <Form.Group controlId={name} className="InputField">
             {label && <Form.Label>{label}</Form.Label>}
             <Form.Control
+                as={as || 'input'}
+                rows={rows || undefined}
                 type={type || 'text'}
                 value={value}
                 ref={fieldRef}
