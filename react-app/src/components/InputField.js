@@ -1,3 +1,7 @@
+/*
+ * Component to render a text input field.
+ */
+
 import Form from 'react-bootstrap/Form';
 
 export default function InputField(
@@ -10,7 +14,7 @@ export default function InputField(
                 as={as || 'input'}
                 rows={rows || undefined}
                 type={type || 'text'}
-                value={value}
+                defaultValue={value}
                 ref={fieldRef}
             />
             <Form.Text className="text-danger">{error}</Form.Text>
