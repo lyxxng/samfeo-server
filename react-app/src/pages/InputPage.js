@@ -7,11 +7,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
-import Header from '../components/Header';
 import InputField from '../components/InputField';
 import RadioButton from '../components/RadioButton';
 import CheckBox from '../components/CheckBox';
@@ -113,50 +111,47 @@ export default function InputPage() {
     };
 
     return (
-        <Container>
-            <Header />
-            <Body>
-                <h3>Add a dot-bracket structure</h3>
-                <Form onSubmit={onSubmit}>
-                    <InputField
-                        name="structure" as={"textarea"} rows={5}
-                        label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
-                        value={"......(((((........))))).............."}
-                        error={formErrors.structure} fieldRef={structureField} />
-                    <h3>Arguments</h3>
-                    <InputField
-                        name="temperature" label={<b>Sampling temperature</b>} value={"1"}
-                        error={formErrors.temperature} fieldRef={temperatureField} />
-                    <InputField
-                        name="queue" label={<b>Frontier (priority queue) size</b>} value={"10"}
-                        error={formErrors.queue} fieldRef={queueField} />
-                    <RadioButton
-                        label={<b>Optimization objective</b>}
-                        name={"object"} defaultValue={"pd"}
-                        options={[
-                            { label: "Probability defect", value: "pd" },
-                            { label: "Normalized ensemble defect", value: "ned" }
-                        ]} />
-                    <RadioButton
-                        label={<b>Sequence initialization method</b>}
-                        name={"init"} defaultValue={"cg"}
-                        options={[
-                            { label: "Constraint-guided", value: "cg" },
-                            { label: "Uniform random", value: "all" }
-                        ]} />
-                    <InputField
-                        name="step" label={<b>Step (maximum number of iterations)</b>} value={"5000"}
-                        error={formErrors.step} fieldRef={stepField} />
-                    <CheckBox
-                        name="nosm" label="Disable structured mutation" />
-                    <CheckBox
-                        name="nomfe" label="Disable MFE as product" />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Button variant="primary" type="submit">Run SAMFEO</Button>
-                    {loading && <LoadingSpinner></LoadingSpinner>}
-                    </div>
-                </Form>
-            </Body>
-        </Container>
+        <Body>
+            <h3>Add a dot-bracket structure</h3>
+            <Form onSubmit={onSubmit}>
+                <InputField
+                    name="structure" as={"textarea"} rows={5}
+                    label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
+                    value={"(((((......)))))"}
+                    error={formErrors.structure} fieldRef={structureField} />
+                <h3>Arguments</h3>
+                <InputField
+                    name="temperature" label={<b>Sampling temperature</b>} value={"1"}
+                    error={formErrors.temperature} fieldRef={temperatureField} />
+                <InputField
+                    name="queue" label={<b>Frontier (priority queue) size</b>} value={"10"}
+                    error={formErrors.queue} fieldRef={queueField} />
+                <RadioButton
+                    label={<b>Optimization objective</b>}
+                    name={"object"} defaultValue={"pd"}
+                    options={[
+                        { label: "Probability defect", value: "pd" },
+                        { label: "Normalized ensemble defect", value: "ned" }
+                    ]} />
+                <RadioButton
+                    label={<b>Sequence initialization method</b>}
+                    name={"init"} defaultValue={"cg"}
+                    options={[
+                        { label: "Constraint-guided", value: "cg" },
+                        { label: "Uniform random", value: "all" }
+                    ]} />
+                <InputField
+                    name="step" label={<b>Step (maximum number of iterations)</b>} value={"5000"}
+                    error={formErrors.step} fieldRef={stepField} />
+                <CheckBox
+                    name="nosm" label="Disable structured mutation" />
+                <CheckBox
+                    name="nomfe" label="Disable MFE as product" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Button variant="primary" type="submit">Run SAMFEO</Button>
+                {loading && <LoadingSpinner></LoadingSpinner>}
+                </div>
+            </Form>
+        </Body>
     );
 }
