@@ -14,17 +14,9 @@ def samfeo_submission():
     queue = body.get("queue")
     step = body.get("step")
     obj = body.get("object")
-    init = body.get("init")
-    nosm = body.get("nosm")
-    nomfe = body.get("nomfe")
 
     # Create list of arguments
-    args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--init", init, "--step", step]
-
-    if nosm:
-        args.append("--nosm")
-    if nomfe:
-        args.append("--nomfe")
+    args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--step", step]
 
     # Run SAMFEO with timer
     start_time = time.time()
