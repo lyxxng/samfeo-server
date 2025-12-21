@@ -1,23 +1,27 @@
 /* TODO
+   - Add request for SAMFEO++
    - Allow user to input text file
-   - Range for numerical arguments & validation
    - Select sample structures from dropdown
    - Reset button for arguments
 */
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
 import InputField from '../components/InputField';
-import RadioButton from '../components/RadioButton';
 import CheckBox from '../components/CheckBox';
+import RadioButton from '../components/RadioButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function InputPage() {
     const [formErrors, setFormErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [SAMFEOEnabled, setSAMFEOEnabled] = useState(true);
+    const [fastDesignEnabled, setFastDesignEnabled] = useState(true);
 
     const navigate = useNavigate();
 
@@ -25,6 +29,9 @@ export default function InputPage() {
     const temperatureField = useRef();
     const queueField = useRef();
     const stepField = useRef();
+    const motifstepField = useRef();
+    const poststepField = useRef();
+    const pruneField = useRef();
 
     useEffect(() => {
         structureField.current.focus();
@@ -38,28 +45,79 @@ export default function InputPage() {
         const temperature = temperatureField.current.value;
         const queue = queueField.current.value;
         const step = stepField.current.value;
+        const motifstep = motifstepField.current.value;
+        const poststep = poststepField.current.value;
+        const prune = pruneField.current.value;
 
         // Radio button and checkboxes
         const form = ev.target;
         const object = form.object.value;
-        const init = form.init.value;
-        const nosm = form.nosm.checked;
-        const nomfe = form.nomfe.checked;
+        const path = form.path.value;
+        const samfeo = form.samfeo.checked;
+        const fastdesign = form.fastdesign.checked;
 
         const errors = {};
+
+        // User must select at least one program to submit
+        if (!samfeo && !fastdesign) {
+            errors.submit = 'Select at least one program to run.';
+        }
 
         // Text input validation
         if (!structure) {
             errors.structure = 'Specify a dot-bracket structure.';
         }
-        if (!temperature) {
-            errors.temperature = 'Specify a sampling temperature.';
+
+        if (samfeo) {
+            if (!temperature) {
+                errors.temperature = 'Specify a sampling temperature.';
+            } else if (!/^\d+$/.test(temperature)) {
+                errors.temperature = 'Must be a numerical value.';
+            } else if (Number(temperature) < 0.1 || Number(temperature) > 10) {
+                errors.temperature = 'Sampling temperature must be between 0.1 and 10.';
+            }
+
+            if (!queue) {
+                errors.queue = 'Specify a frontier size.';
+            } else if (!/^\d+$/.test(queue)) {
+                errors.queue = 'Must be a numerical value.';
+            } else if (Number(queue) < 1 || Number(queue) > 10) {
+                errors.queue = 'Frontier size must be between 1 and 10.';
+            }
+
+            if (!step) {
+                errors.step = 'Specify a step value.';
+            } else if (!/^\d+$/.test(step)) {
+                errors.step = 'Must be a numerical value.';
+            } else if (Number(step) < 100 || Number(step) > 10000) {
+                errors.step = 'Step value must be between 100 and 10000.';
+            }
         }
-        if (!queue) {
-            errors.queue = 'Specify a frontier size.';
-        }
-        if (!step) {
-            errors.step = 'Specify a step value.';
+        
+        if (fastdesign) {
+            if (!motifstep) {
+                errors.motifstep = 'Specify a step value.';
+            } else if (!/^\d+$/.test(motifstep)) {
+                errors.motifstep = 'Must be a numerical value.';
+            } else if (Number(motifstep) < 100 || Number(motifstep) > 10000) {
+                errors.motifstep = 'Step value must be between 100 and 10000.';
+            }
+
+            if (!poststep) {
+                errors.poststep = 'Specify a step value.';
+            } else if (!/^\d+$/.test(poststep)) {
+                errors.poststep = 'Must be a numerical value.';
+            } else if (Number(poststep) < 0 || Number(poststep) > 2500) {
+                errors.poststep = 'Step value must be between 0 and 2500.';
+            }
+
+            if (!prune) {
+                errors.prune = 'Specify a beam size.';
+            } else if (!/^\d+$/.test(prune)) {
+                errors.prune = 'Must be a numerical value.';
+            } else if (Number(prune) < 10 || Number(prune) > 100) {
+                errors.prune = 'Beam size must be between 10 and 100.';
+            }
         }
 
         setFormErrors(errors);
@@ -69,7 +127,7 @@ export default function InputPage() {
 
         setLoading(true);
 
-        console.log(structure, temperature, queue, step, object, init, nosm, nomfe);
+        console.log(structure, temperature, queue, step, object);
 
         const requestOptions = {
             method: 'POST',
@@ -79,10 +137,7 @@ export default function InputPage() {
                 temperature: temperature,
                 queue: queue,
                 step: step,
-                object: object,
-                init: init,
-                nosm: nosm,
-                nomfe: nomfe
+                object: object
             })
         };
 
@@ -119,38 +174,88 @@ export default function InputPage() {
                     label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
                     value={"(((((......)))))"}
                     error={formErrors.structure} fieldRef={structureField} />
-                <h3>Arguments</h3>
-                <InputField
-                    name="temperature" label={<b>Sampling temperature</b>} value={"1"}
-                    error={formErrors.temperature} fieldRef={temperatureField} />
-                <InputField
-                    name="queue" label={<b>Frontier (priority queue) size</b>} value={"10"}
-                    error={formErrors.queue} fieldRef={queueField} />
+                
+                <hr style={{
+                    margin: '2rem 0',
+                    borderTop: '2px solid',
+                    opacity: '0.5'
+                }} />
+
+                <h3>SAMFEO Arguments</h3>
+                <CheckBox
+                    name="samfeo"
+                    label="Find design using SAMFEO"
+                    checked={SAMFEOEnabled}
+                    onChange={(e) => setSAMFEOEnabled(e.target.checked)} />
+
+                <Row>
+                    <Col md={4} lg={5}>
+                        <InputField
+                        name="temperature" label={<span><b>Sampling temperature</b> (0.1 - 10)</span>}
+                        value={"1"} error={formErrors.temperature} fieldRef={temperatureField}
+                        disabled={!SAMFEOEnabled} />
+                        <InputField
+                        name="queue" label={<span><b>Frontier (priority queue) size</b> (1 - 10)</span>}
+                        value={"10"} error={formErrors.queue} fieldRef={queueField}
+                        disabled={!SAMFEOEnabled} />
+                        <InputField
+                        name="step" label={<span><b>Number of steps</b> (100 - 10000)</span>}
+                        value={"5000"} error={formErrors.step} fieldRef={stepField}
+                        disabled={!SAMFEOEnabled} />
+                    </Col>
+                </Row>
                 <RadioButton
-                    label={<b>Optimization objective</b>}
+                    label={<span><b>Optimization objective</b></span>}
                     name={"object"} defaultValue={"pd"}
                     options={[
                         { label: "Probability defect", value: "pd" },
                         { label: "Normalized ensemble defect", value: "ned" }
-                    ]} />
+                    ]}
+                    disabled={!SAMFEOEnabled} />
+                
+                <hr style={{
+                    margin: '2rem 0',
+                    borderTop: '2px solid',
+                    opacity: '0.5'
+                }} />
+
+                <h3>SAMFEO++ Arguments</h3>
+                <CheckBox
+                    name="fastdesign"
+                    label="Find design using SAMFEO++"
+                    checked={fastDesignEnabled}
+                    onChange={(e) => setFastDesignEnabled(e.target.checked)} />
+
+                <Row>
+                    <Col md={4} lg={5}>
+                        <InputField
+                            name="motifstep" value={"5000"} error={formErrors.motifstep} fieldRef={motifstepField}
+                            label={<span><b>Number of steps for leaf-node (motif-level) design</b> (100 - 10000)</span>}
+                            disabled={!fastDesignEnabled} />
+                        <InputField
+                            name="poststep" value={"0"} error={formErrors.poststep} fieldRef={poststepField}
+                            label={<span><b>Number of steps for root-node (full structure) refinement</b> (0 - 2500)</span>}
+                            disabled={!fastDesignEnabled} />
+                        <InputField
+                            name="prune" label={<span><b>Beam size for cubic pruning</b> (10 - 100)</span>}
+                            value={"90"} error={formErrors.prune} fieldRef={pruneField}
+                            disabled={!fastDesignEnabled} />
+                    </Col>
+                </Row>
                 <RadioButton
-                    label={<b>Sequence initialization method</b>}
-                    name={"init"} defaultValue={"cg"}
+                    label={<span><b>Motifs used for structure decomposition</b></span>}
+                    name={"path"} defaultValue="easy"
                     options={[
-                        { label: "Constraint-guided", value: "cg" },
-                        { label: "Uniform random", value: "all" }
-                    ]} />
-                <InputField
-                    name="step" label={<b>Step (maximum number of iterations)</b>} value={"5000"}
-                    error={formErrors.step} fieldRef={stepField} />
-                <CheckBox
-                    name="nosm" label="Disable structured mutation" />
-                <CheckBox
-                    name="nomfe" label="Disable MFE as product" />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Button variant="primary" type="submit">Run SAMFEO</Button>
+                        { label: "Easy motifs", value: "easy" },
+                        { label: "Helix motifs", value: "helix" }
+                    ]}
+                    disabled={!fastDesignEnabled} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '30px' }}>
+                <Button name="submit" variant="primary" type="submit">Run</Button>
                 {loading && <LoadingSpinner></LoadingSpinner>}
                 </div>
+                <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
             </Form>
         </Body>
     );

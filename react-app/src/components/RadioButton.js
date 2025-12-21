@@ -5,7 +5,7 @@
 import Form from 'react-bootstrap/Form';
 
 export default function RadioButton(
-    { name, label, options, error, defaultValue }
+    { name, label, options, error, defaultValue, disabled = false }
 ) {
     return (
         <Form.Group controlId={name} className="RadioButton">
@@ -19,7 +19,8 @@ export default function RadioButton(
                             label={option.label}
                             name={name}
                             value={option.value}
-                            defaultChecked={option.value === defaultValue} />
+                            defaultChecked={option.value === defaultValue}
+                            disabled={disabled} />
                     );
                 })}
             </div>

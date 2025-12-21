@@ -5,7 +5,7 @@
 import Form from 'react-bootstrap/Form';
 
 export default function InputField(
-    { name, label, as, rows, type, value, error, fieldRef }
+    { name, label, as, rows, type, value, error, fieldRef, disabled = false }
 ) {
     return (
         <Form.Group controlId={name} className="InputField">
@@ -16,6 +16,7 @@ export default function InputField(
                 type={type || 'text'}
                 defaultValue={value}
                 ref={fieldRef}
+                disabled={disabled}
             />
             <Form.Text className="text-danger">{error}</Form.Text>
         </Form.Group>
