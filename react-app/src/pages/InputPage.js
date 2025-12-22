@@ -1,5 +1,4 @@
 /* TODO
-   - Add request for SAMFEO++
    - Allow user to input text file
    - Select sample structures from dropdown
    - Reset button for arguments
@@ -33,6 +32,7 @@ export default function InputPage() {
     const poststepField = useRef();
     const pruneField = useRef();
 
+    // Cursor in structure text area
     useEffect(() => {
         structureField.current.focus();
     }, []);
@@ -68,6 +68,7 @@ export default function InputPage() {
             errors.structure = 'Specify a dot-bracket structure.';
         }
 
+        // Validation for SAMFEO arguments
         if (samfeo) {
             if (!temperature) {
                 errors.temperature = 'Specify a sampling temperature.';
@@ -94,6 +95,7 @@ export default function InputPage() {
             }
         }
         
+        // Validation for SAMFEO++ arguments
         if (fastdesign) {
             if (!motifstep) {
                 errors.motifstep = 'Specify a step value.';
@@ -120,48 +122,89 @@ export default function InputPage() {
             }
         }
 
+        // Display any errors and stop submission
         setFormErrors(errors);
         if (Object.keys(errors).length > 0) {
             return;
         }
 
+        // If no errors, display loading symbol
         setLoading(true);
 
         console.log(structure, temperature, queue, step, object);
+        console.log(structure, motifstep, poststep, prune, path);
 
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                structure: structure,
-                temperature: temperature,
-                queue: queue,
-                step: step,
-                object: object
-            })
-        };
+        let SAMFEOResult = null;
+        let fastDesignResult = null;
 
-        try {
-            const response = await fetch("/api/submit", requestOptions);
-            const data = await response.json();
+        const requests = [];
 
-            if (!response.ok) {
-                console.error("Error:", data.error);
+        // SAMFEO request
+        if (samfeo) {
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    structure: structure,
+                    temperature: temperature,
+                    queue: queue,
+                    step: step,
+                    object: object
+                })
+            };
 
-                setFormErrors(prevErrors => ({
-                    ...prevErrors,
-                    structure: "Invalid dot-bracket structure."
+            const SAMFEOPromise = fetch("api/samfeo_submit", requestOptions)
+                .then(res => res.json().then(data => {
+                    if (!res.ok) throw new Error(data.error);
+                    SAMFEOResult = data;
                 }));
-                setLoading(false);
 
-                return;
-            }
+            requests.push(SAMFEOPromise);
+        }
 
-            navigate("/results", { state: data })
+        // SAMFEO++ request
+        if (fastdesign) {
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    structure: structure,
+                    step: motifstep,
+                    poststep: poststep,
+                    k_prune: prune,
+                    motif_path: path
+                })
+            };
+
+            const fastDesignPromise = fetch("api/fastdesign_submit", requestOptions)
+                .then(res => res.json().then(data => {
+                    if (!res.ok) throw new Error(data.error);
+                    fastDesignResult = data;
+                }));
+
+            requests.push(fastDesignPromise);
+        }
+
+        // Get data from all requests
+        try {
+            await Promise.all(requests);
+
+            navigate("/results", {
+                state: {
+                    samfeo: SAMFEOResult,
+                    fastDesign: fastDesignResult
+                }
+            });
 
         } catch (err) {
             console.error("Error:", err);
+            setFormErrors(prevErrors => ({
+                ...prevErrors,
+                structure: "Invalid dot-bracket structure."
+            }));
             setLoading(false);
+
+            return;
         }
     };
 
