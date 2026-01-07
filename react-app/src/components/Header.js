@@ -5,7 +5,7 @@ export default function Header() {
     return (
         <Navbar bg="light" sticky="top" className="Header">
             <Container>
-                <Navbar.Brand>SAMFEO Web Server</Navbar.Brand>
+                <Navbar.Brand>SAMFEO & SAMFEO++ Web Server</Navbar.Brand>
             </Container>
         </Navbar>
     );

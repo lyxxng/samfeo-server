@@ -5,20 +5,29 @@
 import Table from 'react-bootstrap/Table';
 
 export default function ResultsTable(
-    { headers, content }
+    { headerClass, headers, content }
 ) {
     return (
         <Table bordered hover responsive className="ResultsTable">
-            <thead>
+            <thead className={headerClass}>
                 <tr>
-                    {headers.map(h => <th key={h}>{h}</th>)}
+                    {headers.map((header, index) => (
+                        <th key={index} className={header.className || ''}>
+                            {header.label}
+                        </th>
+                    ))}
                 </tr>
             </thead>
             <tbody>
                 {content.map((row, rowIndex) => (
                     <tr key={rowIndex}>
                         {row.map((cell, cellIndex) => (
-                            <td key={cellIndex}>{cell}</td>
+                            <td
+                                key={cellIndex}
+                                className={cell.className || ''}
+                            >
+                                {cell.value}
+                            </td>
                         ))}
                     </tr>
                 ))}

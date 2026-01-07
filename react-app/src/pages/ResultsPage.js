@@ -1,17 +1,13 @@
 /* TODO
-   - Download result file(s)
    - Copy structures and sequences to clipboard
    - Display figures of structures (stretch goal)
-   - Make prettier somehow
-   - Display the design options
 */
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
 import ResultsTable from '../components/ResultsTable';
-import Monospace from '../components/Monospace';
-
+import DownloadButtons from '../components/DownloadButtons';
 export default function ResultsPage() {
     const location = useLocation();
     const data = location.state;
@@ -27,105 +23,150 @@ export default function ResultsPage() {
         )
     }
 
-    const { samfeo, fastDesign } = data || {};
+    const { s, f } = data || {};
     
-    const showSAMFEO = Boolean(samfeo);
-    const showFastDesign = Boolean(fastDesign);
+    const showSAMFEO = Boolean(s);
+    const showFastDesign = Boolean(f);
 
-    const emptyCell = <span style={{ opacity: 0.4 }}>—</span>;
+    const headers = [
+        { label: 'Metric', className: 'font-bold uppercase'},
+        ...(showSAMFEO
+            ? [{ label: 'SAMFEO', className: 'text-center text-lg font-bold'}]
+            : []),
+        ...(showFastDesign
+            ? [{ label: 'SAMFEO++', className: 'text-center text-lg font-bold'}]
+            : [])
+    ];
 
-    // Table headers
-    const headers = ["Metric"];
-    if (showSAMFEO) headers.push("SAMFEO Results");
-    if (showFastDesign) headers.push("SAMFEO++ Results");
-
-    // Content for all rows
-    const rowDefs = [
-        {
-            label: "Target structure",
-            samfeo: s => s.structure,
-            fast: f => f.structure
-        },
-        {
-            label: "RNA sequence (best objective value)",
-            samfeo: s => s.rna,
-            fast: null
-        },
-        {
-            label: "Normalized ensemble defect (NED)",
-            samfeo: s => s.ned_val,
-            fast: f => f.ned_val
-        },
-        {
-            label: "Best NED sequence",
-            samfeo: s => s.ned_seq,
-            fast: f => f.ned_seq
-        },
-        {
-            label: "Structure distance (d)",
-            samfeo: s => s.dist_val,
-            fast: f => f.dist_val
-        },
-        {
-            label: "Best d sequence",
-            samfeo: s => s.dist_seq,
-            fast: f => f.dist_seq
-        },
-        {
-            label: "Conditional probability (prob)",
-            samfeo: null,
-            fast: f => f.prob_val
-        },
-        {
-            label: "Best prob sequence",
-            samfeo: null,
-            fast: f => f.prob_seq
-        },
-        {
-            label: "# of MFE found",
-            samfeo: s => s.mfe,
-            fast: f => f.mfe
-        },
-        {
-            label: "# of uMFE found",
-            samfeo: s => s.umfe,
-            fast: f => f.umfe
-        },
-        {
-            label: "Time",
-            samfeo: s => s.time,
-            fast: f => f.time
-        }
-    ]
-
-    // Create the table with an empty cell as necessary
-    const tableContent = rowDefs.map(row => {
-        const cells = [row.label];
-
-        if (showSAMFEO) {
-            cells.push(
-            row.samfeo
-                ? <Monospace>{row.samfeo(samfeo)}</Monospace>
-                : emptyCell
-            );
-        }
-
-        if (showFastDesign) {
-            cells.push(
-            row.fast
-                ? <Monospace>{row.fast(fastDesign)}</Monospace>
-                : emptyCell
-            );
-        }
-
-        return cells;
-    });
+    const rows = [
+        [
+            { value: 'Target Structure', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.structure, className: 'text-center mono text-emerald font-bold'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.structure, className: 'text-center mono text-emerald font-bold'}]
+                : [])
+        ],
+        [
+            { value: 'Best Prob.', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.prob_val, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.prob_val, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Sequence w/ Best Prob.', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.prob_seq, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.prob_seq, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Best NED', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.ned_val, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.ned_val, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Sequence w/ Best NED', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.ned_seq, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.ned_seq, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Best Structural Distance', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.dist_val, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.dist_val, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Sequence w/ Best Distance', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.dist_seq, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.dist_seq, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: '# of MFE Design', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.mfe, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.mfe, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: '# of uMFE Design', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.umfe, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.umfe, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'MFE Design Example', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.mfe_sample, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.mfe_sample, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'uMFE Design Example', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.umfe_sample, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.umfe_sample, className: 'text-center mono'}]
+                : [])
+        ],
+        [
+            { value: 'Time (seconds)', className: 'font-semibold text-slate'},
+            ...(showSAMFEO
+                ? [{ value: s.time, className: 'text-center mono'}]
+                : []),
+            ...(showFastDesign
+                ? [{ value: f.time, className: 'text-center mono'}]
+                : [])
+        ]
+    ];
 
     return (
         <Body>
-            <h3>Results</h3>
-            <ResultsTable headers={headers} content={tableContent} />
-            <Button variant="secondary" type="button" onClick={goBack}>&larr; Go back</Button>
+            <div className='results-card'>
+                <h3>RNA Design Results</h3>
+
+                <ResultsTable
+                    headerClass={'method-header'}
+                    headers={headers}
+                    content={rows}
+                />
+                
+                <DownloadButtons
+                    samfeo={s}
+                    fastDesign={f}
+                />
+
+                <Button variant="secondary" type="button" onClick={goBack}>&larr; Go back</Button>
+            </div>
         </Body>
     )
 }

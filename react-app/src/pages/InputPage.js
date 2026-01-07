@@ -15,6 +15,7 @@ import InputField from '../components/InputField';
 import CheckBox from '../components/CheckBox';
 import RadioButton from '../components/RadioButton';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Citation from '../components/Citation';
 
 export default function InputPage() {
     const [formErrors, setFormErrors] = useState({});
@@ -191,8 +192,8 @@ export default function InputPage() {
 
             navigate("/results", {
                 state: {
-                    samfeo: SAMFEOResult,
-                    fastDesign: fastDesignResult
+                    s: SAMFEOResult,
+                    f: fastDesignResult
                 }
             });
 
@@ -210,96 +211,104 @@ export default function InputPage() {
 
     return (
         <Body>
-            <h3>Add a dot-bracket structure</h3>
-            <Form onSubmit={onSubmit}>
-                <InputField
-                    name="structure" as={"textarea"} rows={5}
-                    label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
-                    value={"(((((......)))))"}
-                    error={formErrors.structure} fieldRef={structureField} />
-                
-                <hr style={{
-                    margin: '2rem 0',
-                    borderTop: '2px solid',
-                    opacity: '0.5'
-                }} />
+            <div className='input-card'>
+                <h3>Add a dot-bracket structure</h3>
+                <Form onSubmit={onSubmit}>
+                    <InputField
+                        name="structure" as={"textarea"} rows={5}
+                        label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
+                        value={"(((((......)))))"}
+                        error={formErrors.structure} fieldRef={structureField} />
+                    
+                    <hr style={{
+                        margin: '2rem 0',
+                        borderTop: '2px solid',
+                        opacity: '0.5'
+                    }} />
 
-                <h3>SAMFEO Arguments</h3>
-                <CheckBox
-                    name="samfeo"
-                    label="Find design using SAMFEO"
-                    checked={SAMFEOEnabled}
-                    onChange={(e) => setSAMFEOEnabled(e.target.checked)} />
+                    <h3>SAMFEO Arguments</h3>
+                    <CheckBox
+                        name="samfeo"
+                        label="Find design using SAMFEO"
+                        checked={SAMFEOEnabled}
+                        onChange={(e) => setSAMFEOEnabled(e.target.checked)} />
 
-                <Row>
-                    <Col md={4} lg={5}>
-                        <InputField
-                        name="temperature" label={<span><b>Sampling temperature</b> (0.1 - 10)</span>}
-                        value={"1"} error={formErrors.temperature} fieldRef={temperatureField}
+                    <Row>
+                        <Col md={5} lg={6}>
+                            <InputField
+                            name="temperature" label={<span><b>Sampling temperature</b> (0.1 - 10)</span>}
+                            value={"1"} error={formErrors.temperature} fieldRef={temperatureField}
+                            disabled={!SAMFEOEnabled} />
+                            <InputField
+                            name="queue" label={<span><b>Frontier (priority queue) size</b> (1 - 10)</span>}
+                            value={"10"} error={formErrors.queue} fieldRef={queueField}
+                            disabled={!SAMFEOEnabled} />
+                            <InputField
+                            name="step" label={<span><b>Number of steps</b> (100 - 10000)</span>}
+                            value={"5000"} error={formErrors.step} fieldRef={stepField}
+                            disabled={!SAMFEOEnabled} />
+                        </Col>
+                    </Row>
+                    
+                    <RadioButton
+                        label={<span><b>Optimization objective</b></span>}
+                        name={"object"} defaultValue={"pd"}
+                        options={[
+                            { label: "Probability defect", value: "pd" },
+                            { label: "Normalized ensemble defect", value: "ned" }
+                        ]}
                         disabled={!SAMFEOEnabled} />
-                        <InputField
-                        name="queue" label={<span><b>Frontier (priority queue) size</b> (1 - 10)</span>}
-                        value={"10"} error={formErrors.queue} fieldRef={queueField}
-                        disabled={!SAMFEOEnabled} />
-                        <InputField
-                        name="step" label={<span><b>Number of steps</b> (100 - 10000)</span>}
-                        value={"5000"} error={formErrors.step} fieldRef={stepField}
-                        disabled={!SAMFEOEnabled} />
-                    </Col>
-                </Row>
-                <RadioButton
-                    label={<span><b>Optimization objective</b></span>}
-                    name={"object"} defaultValue={"pd"}
-                    options={[
-                        { label: "Probability defect", value: "pd" },
-                        { label: "Normalized ensemble defect", value: "ned" }
-                    ]}
-                    disabled={!SAMFEOEnabled} />
-                
-                <hr style={{
-                    margin: '2rem 0',
-                    borderTop: '2px solid',
-                    opacity: '0.5'
-                }} />
+                    
+                    <hr style={{
+                        margin: '2rem 0',
+                        borderTop: '2px solid',
+                        opacity: '0.5'
+                    }} />
 
-                <h3>SAMFEO++ Arguments</h3>
-                <CheckBox
-                    name="fastdesign"
-                    label="Find design using SAMFEO++"
-                    checked={fastDesignEnabled}
-                    onChange={(e) => setFastDesignEnabled(e.target.checked)} />
+                    <h3>SAMFEO++ Arguments</h3>
+                    <CheckBox
+                        name="fastdesign"
+                        label="Find design using SAMFEO++"
+                        checked={fastDesignEnabled}
+                        onChange={(e) => setFastDesignEnabled(e.target.checked)} />
 
-                <Row>
-                    <Col md={4} lg={5}>
-                        <InputField
-                            name="motifstep" value={"5000"} error={formErrors.motifstep} fieldRef={motifstepField}
-                            label={<span><b>Number of steps for leaf-node (motif-level) design</b> (100 - 10000)</span>}
-                            disabled={!fastDesignEnabled} />
-                        <InputField
-                            name="poststep" value={"0"} error={formErrors.poststep} fieldRef={poststepField}
-                            label={<span><b>Number of steps for root-node (full structure) refinement</b> (0 - 2500)</span>}
-                            disabled={!fastDesignEnabled} />
-                        <InputField
-                            name="prune" label={<span><b>Beam size for cubic pruning</b> (10 - 100)</span>}
-                            value={"90"} error={formErrors.prune} fieldRef={pruneField}
-                            disabled={!fastDesignEnabled} />
-                    </Col>
-                </Row>
-                <RadioButton
-                    label={<span><b>Motifs used for structure decomposition</b></span>}
-                    name={"path"} defaultValue="easy"
-                    options={[
-                        { label: "Easy motifs", value: "easy" },
-                        { label: "Helix motifs", value: "helix" }
-                    ]}
-                    disabled={!fastDesignEnabled} />
+                    <Row>
+                        <Col md={5} lg={6}>
+                            <InputField
+                                name="motifstep" value={"5000"} error={formErrors.motifstep} fieldRef={motifstepField}
+                                label={<span><b>Number of steps for leaf-node (motif-level) design</b> (100 - 10000)</span>}
+                                disabled={!fastDesignEnabled} />
+                            <InputField
+                                name="poststep" value={"0"} error={formErrors.poststep} fieldRef={poststepField}
+                                label={<span><b>Number of steps for root-node (full structure) refinement</b> (0 - 2500)</span>}
+                                disabled={!fastDesignEnabled} />
+                            <InputField
+                                name="prune" label={<span><b>Beam size for cubic pruning</b> (10 - 100)</span>}
+                                value={"90"} error={formErrors.prune} fieldRef={pruneField}
+                                disabled={!fastDesignEnabled} />
+                        </Col>
+                    </Row>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '30px' }}>
-                <Button name="submit" variant="primary" type="submit">Run</Button>
-                {loading && <LoadingSpinner></LoadingSpinner>}
-                </div>
-                <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
-            </Form>
+                    <RadioButton
+                        label={<span><b>Motifs used for structure decomposition</b></span>}
+                        name={"path"} defaultValue="easy"
+                        options={[
+                            { label: "Easy motifs", value: "easy" },
+                            { label: "Helix motifs", value: "helix" }
+                        ]}
+                        disabled={!fastDesignEnabled} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '30px' }}>
+                    <Button name="submit" variant="primary" type="submit">Run</Button>
+                    {loading && <LoadingSpinner></LoadingSpinner>}
+                    </div>
+
+                    <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
+                </Form>
+            </div>
+            
+            <Citation></Citation>
+            
         </Body>
     );
 }
