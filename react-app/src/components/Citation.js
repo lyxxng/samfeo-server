@@ -19,6 +19,10 @@ export default function Citation() {
             GitHub</a>, Code for SAMFEO++:&nbsp;
             <a href="https://github.com/shanry/FastDesign/tree/main#">
             GitHub</a></h6>
+
+            <h6>Web demo created by <a href="https://github.com/lyxxng">
+                Lisa Young
+            </a></h6>
         </div>
     )
 }
