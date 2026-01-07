@@ -1,9 +1,45 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, abort
 import json
 import subprocess
 import os
+import time
+import threading
 
 app = Flask(__name__)
+
+TEMP_DIR = "./tmp"
+
+# Relative to temp directory
+SAMFEO_PATH = "../../programs/SAMFEO/"
+FD_PATH = "../../programs/FastDesign/"
+
+CLEAN_FREQUENCY = 3600  # Every hour
+
+def cleanup():
+    while True:
+        curr_time = time.time()
+
+        # Check every file in the temp directory
+        for f in os.listdir(TEMP_DIR):
+            path = os.path.join(TEMP_DIR, f)
+            if os.path.isfile(path):
+                elapsed = curr_time - os.path.getmtime(path)
+                if elapsed > CLEAN_FREQUENCY:
+                    os.remove(path)
+                    print("Removed file " + path)
+
+        # Check every 5 minutes            
+        time.sleep(300)
+
+
+# Create temp directory if it doesn't already exist
+os.makedirs(TEMP_DIR, exist_ok=True)
+
+# Start the cleanup thread
+thread = threading.Thread(target=cleanup, daemon=True)
+thread.start()
+print("Cleanup thread started")
+
 
 # SAMFEO API call
 @app.route('/api/samfeo_submit', methods=['POST'])
@@ -21,10 +57,11 @@ def samfeo_submission():
 
     # Run SAMFEO
     result = subprocess.run(
-        ["python3", "../SAMFEO/main.py"] + args,
+        ["python3", SAMFEO_PATH + "main.py"] + args,
         input=structure,
         text=True,
-        capture_output=True)
+        capture_output=True,
+        cwd=TEMP_DIR)
         
     s = result.stdout
     e = result.stderr
@@ -35,23 +72,19 @@ def samfeo_submission():
             "error": e
         }), 400
 
-    # Locate the RNA sequence in stdout
-    rna_len = len(structure)
-
-    start_seq = s.find("RNA sequence") + 15
-    end_seq = start_seq + rna_len + 1
-    seq = s[start_seq:end_seq]
-
     # Get the json file name
     stdout_len = len(s)
     json_file = s[s.find("results_"):stdout_len - 1]
 
+    temp_path = os.path.join(TEMP_DIR, json_file)
+
     # Save info from the json file
-    with open(json_file) as f:
+    with open(temp_path) as f:
         data = json.load(f)
 
-        mfe = len(data['mfe'])
-        umfe = len(data['umfe'])
+        prob_best = data['prob_best']
+        prob_val = prob_best[0]
+        prob_seq = prob_best[1]
 
         ned_best = data['ned_best']
         ned_val = ned_best[0]
@@ -61,22 +94,36 @@ def samfeo_submission():
         dist_val = dist_best[0]
         dist_seq = dist_best[1]
 
-        total_time = data['time']
-    
-    # Remove the results file
-    os.remove(json_file)
+        mfe = len(data['mfe'])
+        umfe = len(data['umfe'])
+
+        if mfe > 0:
+            mfe_sample = data['mfe'][0]
+        else:
+            mfe_sample = "—"
         
+        if umfe > 0:
+            umfe_sample = data['umfe'][0]
+        else:
+            umfe_sample = "—"
+
+        total_time = data['time']
+            
     # Return all data and time elapsed for SAMFEO
     return jsonify({
         "structure": structure,
-        "rna": seq,
-        "mfe": mfe,
-        "umfe": umfe,
-        "ned_val": ned_val,
+        "prob_val": str(round(prob_val, 4)),
+        "prob_seq": prob_seq,
+        "ned_val": str(round(ned_val, 3)),
         "ned_seq": ned_seq,
         "dist_val": dist_val,
         "dist_seq": dist_seq,
-        "time": str(round(total_time, 3)) + "s"
+        "mfe": mfe,
+        "umfe": umfe,
+        "mfe_sample": mfe_sample,
+        "umfe_sample": umfe_sample,
+        "time": str(round(total_time, 3)),
+        "results": json_file
     })
 
 # SAMFEO++ / FastDesign API call
@@ -95,15 +142,16 @@ def fastdesign_submission():
 
     # Append correct path to motifs
     if motif_path == "easy":
-        args.append("../FastDesign/data/easy_motifs.txt")
+        args.append(FD_PATH + "data/easy_motifs.txt")
     elif motif_path == "helix":
-        args.append("../FastDesign/data/helix_motifs.txt")
+        args.append(FD_PATH + "data/helix_motifs.txt")
     
     result = subprocess.run(
-        ["python3", "../FastDesign/main.py"] + args,
+        ["python3", FD_PATH + "main.py"] + args,
         input=structure,
         text=True,
-        capture_output=True)
+        capture_output=True,
+        cwd=TEMP_DIR)
     
     s = result.stdout
     e = result.stderr
@@ -118,40 +166,67 @@ def fastdesign_submission():
     stdout_len = len(s)
     json_file = s[s.find("results_"):stdout_len - 1]
 
+    temp_path = os.path.join(TEMP_DIR, json_file)
+
     # Save info from the json file
-    with open(json_file) as f:
+    with open(temp_path) as f:
         data = json.load(f)
-
-        mfe = len(data['mfe_list'])
-        umfe = len(data['umfe_list'])
-
-        ned_best = data['ned_best']
-        ned_val = ned_best[0]
-        ned_seq = ned_best[1]
 
         prob_best = data['prob_best']
         prob_val = prob_best[0]
         prob_seq = prob_best[1]
 
+        ned_best = data['ned_best']
+        ned_val = ned_best[0]
+        ned_seq = ned_best[1]
+
         dist_best = data['dist_best']
         dist_val = dist_best[0]
         dist_seq = dist_best[1]
 
+        mfe = len(data['mfe_list'])
+        umfe = len(data['umfe_list'])
+
+        if mfe > 0:
+            mfe_sample = data['mfe_list'][0]
+        else:
+            mfe_sample = "—"
+        
+        if umfe > 0:
+            umfe_sample = data['umfe_list'][0]
+        else:
+            umfe_sample = "—"
+
         total_time = data['time']
-    
-    # Remove the results file
-    os.remove(json_file)
         
     # Return all data and time elapsed for SAMFEO++
     return jsonify({
         "structure": structure,
-        "mfe": mfe,
-        "umfe": umfe,
-        "ned_val": ned_val,
-        "ned_seq": ned_seq,
-        "prob_val": prob_val,
+        "prob_val": str(round(prob_val, 4)),
         "prob_seq": prob_seq,
+        "ned_val": str(round(ned_val, 3)),
+        "ned_seq": ned_seq,
         "dist_val": dist_val,
         "dist_seq": dist_seq,
-        "time": str(round(total_time, 3)) + "s"
+        "mfe": mfe,
+        "umfe": umfe,
+        "mfe_sample": mfe_sample,
+        "umfe_sample": umfe_sample,
+        "time": str(round(total_time, 3)),
+        "results": json_file
     })
+
+# Download files
+@app.route('/api/download/<filename>')
+def download_file(filename):
+    file_path = os.path.join(TEMP_DIR, filename)
+
+    if not os.path.exists(file_path):
+        abort(404)
+
+    return send_from_directory(
+        TEMP_DIR,
+        filename,
+        as_attachment=True,
+        mimetype="application/json"
+    )
