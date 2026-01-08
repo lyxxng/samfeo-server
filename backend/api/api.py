@@ -4,14 +4,16 @@ import subprocess
 import os
 import time
 import threading
+from pathlib import Path
 
 app = Flask(__name__)
 
-TEMP_DIR = "./tmp"
+PARENT = Path(__file__).parent
 
-# Relative to temp directory
-SAMFEO_PATH = "../../programs/SAMFEO/"
-FD_PATH = "../../programs/FastDesign/"
+TEMP_DIR = os.join(PARENT, "./tmp")
+
+SAMFEO_PATH = os.join(PARENT, "..", "programs", "SAMFEO")
+FD_PATH = os.join(PARENT, "..", "programs", "FastDesign")
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
