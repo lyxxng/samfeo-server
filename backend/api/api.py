@@ -8,7 +8,8 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-print(Path.cwd())
+print("current working directory: ", Path.cwd())
+print("Path(__file__).resolve().parent: ", Path(__file__).resolve().parent)
 
 # backend/api/
 TEMP_DIR = os.path.join(Path.cwd(), "./tmp")
