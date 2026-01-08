@@ -15,6 +15,10 @@ FD_PATH = "../../programs/FastDesign/"
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
+@app.route("/health")
+def health():
+    return "ok"
+
 def cleanup():
     while True:
         curr_time = time.time()
