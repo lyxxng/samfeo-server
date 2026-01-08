@@ -32,25 +32,26 @@ def cleanup():
         time.sleep(300)
 
 
-# Create temp directory if it doesn't already exist
-os.makedirs(TEMP_DIR, exist_ok=True)
+with app.app_context():
+    # Create temp directory if it doesn't already exist
+    os.makedirs(TEMP_DIR, exist_ok=True)
 
-# Start the cleanup thread
-thread = threading.Thread(target=cleanup, daemon=True)
-thread.start()
-print("Cleanup thread started")
+    # Start the cleanup thread
+    thread = threading.Thread(target=cleanup, daemon=True)
+    thread.start()
+    print("Cleanup thread started")
 
 
 # SAMFEO API call
 @app.route('/api/samfeo_submit', methods=['POST'])
 def samfeo_submission():
-    body = request.json
+    body = request.get_json()
 
-    structure = body.get("structure")
-    temperature = body.get("temperature")
-    queue = body.get("queue")
-    step = body.get("step")
-    obj = body.get("object")
+    structure = body["structure"]
+    temperature = body["temperature"]
+    queue = body["queue"]
+    step = body["step"]
+    obj = body["object"]
 
     # Create list of arguments
     args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--step", step]
@@ -129,13 +130,13 @@ def samfeo_submission():
 # SAMFEO++ / FastDesign API call
 @app.route('/api/fastdesign_submit', methods=['POST'])
 def fastdesign_submission():
-    body = request.json
+    body = request.get_json()
 
-    structure = body.get("structure")
-    step = body.get("step")
-    poststep = body.get("poststep")
-    k_prune = body.get("k_prune")
-    motif_path = body.get("motif_path")
+    structure = body["structure"]
+    step = body["step"]
+    poststep = body["poststep"]
+    k_prune = body["k_prune"]
+    motif_path = body["motif_path"]
 
     # Create list of arguments
     args = ["--online", "--step", step, "--poststep", poststep, "--k_prune", k_prune, "--motif_path"]
