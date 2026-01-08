@@ -8,12 +8,13 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-PARENT = Path(__file__).parent
+print(Path.cwd())
 
-TEMP_DIR = os.path.join(PARENT, "./tmp")
+# backend/api/
+TEMP_DIR = os.path.join(Path.cwd(), "./tmp")
 
-SAMFEO_PATH = os.path.join(PARENT, "..", "programs", "SAMFEO")
-FD_PATH = os.path.join(PARENT, "..", "programs", "FastDesign")
+SAMFEO_PATH = os.path.join(Path.cwd(), "..", "programs", "SAMFEO/")
+FD_PATH = os.path.join(Path.cwd(), "..", "programs", "FastDesign/")
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
