@@ -1,0 +1,59 @@
+Bootstrap: docker
+From: python:3.9-slim
+
+%labels
+    Author YourName
+    Version v1.0
+    FlaskApp "Flask Application"
+
+%environment
+    # Set environment variables
+    export FLASK_APP=/app/api.py
+    export FLASK_ENV=production
+    export PYTHONPATH=/app
+
+%post
+    # Update the package manager
+    apt-get update && apt-get install -y \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        python3-dev \
+        curl \
+        vim \
+        git \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install Flask and other Python dependencies
+    pip install --no-cache-dir --upgrade pip
+    pip install --no-cache-dir flask flask-cors pymongo gunicorn
+
+    # Set up the application directory
+    mkdir -p /app
+
+    # (Optional) Clone your app's repository (if you're pulling from a Git repo)
+    # git clone https://github.com/your-repo/flask-app.git /app
+
+    # Copy the app from the build context (adjust depending on your structure)
+    # cp -r /path/to/your/flask/app/* /app/
+
+%runscript
+    # This is executed when the container is run without any arguments
+    exec gunicorn --bind 0.0.0.0:5000 api.api:app
+
+%startscript
+    # This is executed when the container is started with the 'apptainer start' command
+    exec gunicorn --bind 0.0.0.0:5000 api.api:app
+
+%test
+    # Optional test section to ensure that everything is set up correctly
+    python3 -c 'import flask; print("Flask is installed.")'
+
+%files
+    # (Optional) Copy local files into the container, like the Flask app code
+    # /path/to/your/local/flask/app /app
+    api /app/api
+    programs /app/programs
+
+%post
+    rm -f /app/api/.flaskenv || true
