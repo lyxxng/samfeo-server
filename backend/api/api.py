@@ -12,11 +12,11 @@ app = Flask(__name__)
 PARENT = Path(__file__).parent
 
 # /app/api/../../tmp/samfeo_tmp
-TEMP_DIR = str(PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
+TEMP_DIR = (PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
 
 # /app/api/../programs/
-SAMFEO_PATH = str(PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
-FD_PATH = str(PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
+SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve()
+FD_PATH = (PARENT / ".." / "programs" / "FastDesign").resolve()
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
@@ -30,7 +30,7 @@ def cleanup():
 
         # Check every file in the temp directory
         for f in os.listdir(TEMP_DIR):
-            path = os.path.join(TEMP_DIR, f)
+            path = os.path.join(str(TEMP_DIR), f)
             if os.path.isfile(path):
                 elapsed = curr_time - os.path.getmtime(path)
                 if elapsed > CLEAN_FREQUENCY:
@@ -73,7 +73,7 @@ def samfeo_submission():
 
     # Run SAMFEO
     result = subprocess.run(
-        ["python3", SAMFEO_PATH + "main.py"] + args,
+        ["python3", str(SAMFEO_PATH / "main.py")] + args,
         input=structure,
         text=True,
         capture_output=True,
@@ -92,7 +92,7 @@ def samfeo_submission():
     stdout_len = len(s)
     json_file = s[s.find("results_"):stdout_len - 1]
 
-    temp_path = os.path.join(TEMP_DIR, json_file)
+    temp_path = os.path.join(str(TEMP_DIR), json_file)
 
     # Save info from the json file
     with open(temp_path) as f:
@@ -158,12 +158,12 @@ def fastdesign_submission():
 
     # Append correct path to motifs
     if motif_path == "easy":
-        args.append(FD_PATH + "data/easy_motifs.txt")
+        args.append(str(FD_PATH / "data/easy_motifs.txt"))
     elif motif_path == "helix":
-        args.append(FD_PATH + "data/helix_motifs.txt")
+        args.append(str(FD_PATH / "data/helix_motifs.txt"))
     
     result = subprocess.run(
-        ["python3", FD_PATH + "main.py"] + args,
+        ["python3", str(FD_PATH / "main.py")] + args,
         input=structure,
         text=True,
         capture_output=True,
@@ -182,7 +182,7 @@ def fastdesign_submission():
     stdout_len = len(s)
     json_file = s[s.find("results_"):stdout_len - 1]
 
-    temp_path = os.path.join(TEMP_DIR, json_file)
+    temp_path = os.path.join(str(TEMP_DIR), json_file)
 
     # Save info from the json file
     with open(temp_path) as f:
@@ -235,7 +235,7 @@ def fastdesign_submission():
 # Download files
 @app.route('/api/download/<filename>')
 def download_file(filename):
-    file_path = os.path.join(TEMP_DIR, filename)
+    file_path = os.path.join(str(TEMP_DIR), filename)
 
     if not os.path.exists(file_path):
         abort(404)
