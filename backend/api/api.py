@@ -11,8 +11,8 @@ app = Flask(__name__)
 # /app/api
 PARENT = Path(__file__).parent
 
-# /app/api/tmp
-TEMP_DIR = os.path.join(PARENT, "./tmp")
+# /app/api/../../tmp/samfeo_tmp
+TEMP_DIR = (PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
 
 # /app/api/../programs/
 SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
