@@ -49,13 +49,19 @@ with app.app_context():
 # SAMFEO API call
 @app.route('/api/samfeo_submit', methods=['POST'])
 def samfeo_submission():
-    body = request.get_json()
+    body = request.get_json(silent=True)
+
+    if not body:
+        return {"error": "Invalid JSON"}, 400
 
     structure = body["structure"]
     temperature = body["temperature"]
     queue = body["queue"]
     step = body["step"]
     obj = body["object"]
+
+    if None in [structure, temperature, queue, step, obj]:
+        return {"error": "Missing required fields"}, 400
 
     # Create list of arguments
     args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--step", step]
