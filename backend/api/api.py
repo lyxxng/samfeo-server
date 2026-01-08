@@ -8,14 +8,15 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-print("current working directory: ", Path.cwd())
-print("Path(__file__).resolve().parent: ", Path(__file__).resolve().parent)
+# /app/api
+PARENT = Path(__file__).parent
 
-# backend/api/
-TEMP_DIR = os.path.join(Path.cwd(), "./tmp")
+# /app/api/tmp
+TEMP_DIR = os.path.join(PARENT, "./tmp")
 
-SAMFEO_PATH = os.path.join(Path.cwd(), "..", "programs", "SAMFEO/")
-FD_PATH = os.path.join(Path.cwd(), "..", "programs", "FastDesign/")
+# /app/api/../programs/
+SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
+FD_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
