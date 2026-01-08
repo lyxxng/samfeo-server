@@ -12,11 +12,11 @@ app = Flask(__name__)
 PARENT = Path(__file__).parent
 
 # /app/api/../../tmp/samfeo_tmp
-TEMP_DIR = (PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
+TEMP_DIR = str(PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
 
 # /app/api/../programs/
-SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
-FD_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
+SAMFEO_PATH = str(PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
+FD_PATH = str(PARENT / ".." / "programs" / "SAMFEO").resolve() / ""
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
