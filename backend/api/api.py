@@ -10,10 +10,10 @@ app = Flask(__name__)
 
 PARENT = Path(__file__).parent
 
-TEMP_DIR = os.join(PARENT, "./tmp")
+TEMP_DIR = os.path.join(PARENT, "./tmp")
 
-SAMFEO_PATH = os.join(PARENT, "..", "programs", "SAMFEO")
-FD_PATH = os.join(PARENT, "..", "programs", "FastDesign")
+SAMFEO_PATH = os.path.join(PARENT, "..", "programs", "SAMFEO")
+FD_PATH = os.path.join(PARENT, "..", "programs", "FastDesign")
 
 CLEAN_FREQUENCY = 3600  # Every hour
 
