@@ -8,7 +8,7 @@ export default function App() {
   return (
     <Container fluid className="App">
       <Header />
-      <BrowserRouter>
+      <BrowserRouter basename={process.env.REACT_APP_BASENAME}>
         <Routes>
           <Route path="/" element={<InputPage />} />
           <Route path="/results" element={<ResultsPage />} />
