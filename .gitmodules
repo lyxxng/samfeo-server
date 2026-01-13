@@ -1,7 +1,7 @@
-[submodule "backend/programs/FastDesign"]
-	path = backend/programs/FastDesign
+[submodule "programs/FastDesign"]
+	path = programs/FastDesign
 	url = https://github.com/shanry/FastDesign.git
-[submodule "backend/programs/SAMFEO"]
-	path = backend/programs/SAMFEO
+[submodule "programs/SAMFEO"]
+	path = programs/SAMFEO
 	url = https://github.com/shanry/SAMFEO.git
 	branch = samfeo_prec
