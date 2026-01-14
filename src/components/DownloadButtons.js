@@ -4,12 +4,14 @@
 
 import Button from 'react-bootstrap/Button';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 export default function DownloadButtons(
     { samfeo, fastDesign }
 ) {
     const handleDownload = async(fileName) => {
         try {
-            const response = await fetch(`/api/download/${fileName}`);
+            const response = await fetch(`${API_URL}/api/download/${fileName}`);
             if (!response.ok) throw new Error("File not found");
 
             const blob = await response.blob();
