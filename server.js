@@ -8,8 +8,11 @@ const PORT = 8083;
 app.use("/api", createProxyMiddleware({
   target: "http://127.0.0.1:5002",
   changeOrigin: true,
-})
-);
+  onError(err, req, res) {
+    console.error("API proxy error:", err);
+    res.status(502).json({ error: "Cannot connect to backend" });
+  },
+}));
 
 // Absolute path to build folder
 const buildPath = path.join(__dirname, "build");
