@@ -6,9 +6,12 @@ const app = express();
 const PORT = 8083;
 
 // Proxy requests to flask backend
-app.use('/api', createProxyMiddleware({
+app.use('/samfeo/api', createProxyMiddleware({
   target: 'http://10.217.112.20:5002',
-  changeOrigin: true
+  changeOrigin: true,
+  pathRewrite: {
+    '^/samfeo/api': '/api'  // Strip the /samfeo prefix
+  }
 }));
 
 // Absolute path to build folder
