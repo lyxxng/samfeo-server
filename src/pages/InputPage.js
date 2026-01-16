@@ -157,18 +157,29 @@ export default function InputPage() {
             };
 
             const SAMFEOPromise = fetch(`${API_URL}/samfeo_submit`, requestOptions)
-            .then(async (res) => {
-                const data = await res.json();
-                if (!res.ok) {
-                    const error = new Error(data.error || 'Unknown error');
-                    error.status = res.status;
-                    throw error;
-                }
-                SAMFEOResult = data;
-            });
+                .then(async (res) => {
+                    // Check content type before parsing
+                    const contentType = res.headers.get("content-type");
+                    
+                    if (contentType && contentType.includes("application/json")) {
+                        const data = await res.json();
+                        if (!res.ok) {
+                            const error = new Error(data.error || 'Unknown error');
+                            error.status = res.status;
+                            throw error;
+                        }
+                        SAMFEOResult = data;
+                    } else {
+                        // Got HTML or other non-JSON response
+                        const error = new Error('Server error');
+                        error.status = res.status;
+                        throw error;
+                    }
+                });
 
             requests.push(SAMFEOPromise);
         }
+
 
         // SAMFEO++ request
         if (fastdesign) {
@@ -185,15 +196,25 @@ export default function InputPage() {
             };
 
             const fastDesignPromise = fetch(`${API_URL}/fastdesign_submit`, requestOptions)
-            .then(async (res) => {
-                const data = await res.json();
-                if (!res.ok) {
-                    const error = new Error(data.error || 'Unknown error');
-                    error.status = res.status;
-                    throw error;
-                }
-                fastDesignResult = data;
-            });
+                .then(async (res) => {
+                    // Check content type before parsing
+                    const contentType = res.headers.get("content-type");
+                    
+                    if (contentType && contentType.includes("application/json")) {
+                        const data = await res.json();
+                        if (!res.ok) {
+                            const error = new Error(data.error || 'Unknown error');
+                            error.status = res.status;
+                            throw error;
+                        }
+                        fastDesignResult = data;
+                    } else {
+                        // Got HTML or other non-JSON response
+                        const error = new Error('Server error');
+                        error.status = res.status;
+                        throw error;
+                    }
+                });
 
             requests.push(fastDesignPromise);
         }
