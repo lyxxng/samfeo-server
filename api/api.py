@@ -56,7 +56,9 @@ def samfeo_submission():
     body = request.get_json(silent=True)
 
     if not body:
-        return {"error": "Invalid JSON"}, 400
+        return jsonify({
+            "error": "Invalid JSON"
+        }), 400
 
     structure = body["structure"]
     temperature = body["temperature"]
@@ -65,18 +67,30 @@ def samfeo_submission():
     obj = body["object"]
 
     if None in [structure, temperature, queue, step, obj]:
-        return {"error": "Missing required fields"}, 400
+        return jsonify({
+            "error": "Missing required fields"
+        }), 400
 
     # Create list of arguments
     args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--step", step]
 
-    # Run SAMFEO
-    result = subprocess.run(
-        ["python3", str(SAMFEO_PATH / "main.py")] + args,
-        input=structure,
-        text=True,
-        capture_output=True,
-        cwd=TEMP_DIR)
+    try:
+        # Run SAMFEO
+        result = subprocess.run(
+            ["python3", str(SAMFEO_PATH / "main.py")] + args,
+            input=structure,
+            text=True,
+            capture_output=True,
+            cwd=TEMP_DIR,
+            timeout=840) # 14 minute timeout
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "error": "Algorithm exceeded maximum time limit (10 minutes)"
+        }), 408
+    except Exception as e:
+        return jsonify({
+            "error": f"Error running algorithm: {str(e)}"
+        }), 500
         
     s = result.stdout
     e = result.stderr
@@ -161,12 +175,23 @@ def fastdesign_submission():
     elif motif_path == "helix":
         args.append(str(FD_PATH / "data/helix_motifs.txt"))
     
-    result = subprocess.run(
-        ["python3", str(FD_PATH / "main.py")] + args,
-        input=structure,
-        text=True,
-        capture_output=True,
-        cwd=TEMP_DIR)
+    try:
+        # Run SAMFEO++
+        result = subprocess.run(
+            ["python3", str(FD_PATH / "main.py")] + args,
+            input=structure,
+            text=True,
+            capture_output=True,
+            cwd=TEMP_DIR,
+            timeout=840) # 14 minute time out
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "error": "Algorithm exceeded maximum time limit (10 minutes)"
+        }), 408
+    except Exception as e:
+        return jsonify({
+            "error": f"Error running algorithm: {str(e)}"
+        }), 500
     
     s = result.stdout
     e = result.stderr
