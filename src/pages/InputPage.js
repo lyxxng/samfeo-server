@@ -237,22 +237,22 @@ export default function InputPage() {
             if (err.status === 408) {
                 setFormErrors(prevErrors => ({
                     ...prevErrors,
-                    submit: "Request timed out. The algorithm exceeded the maximum time limit. Try reducing the number of steps or structure size."
+                    submit: "Request timed out."
                 }));
             } else if (err.status === 400) {
                 setFormErrors(prevErrors => ({
                     ...prevErrors,
-                    structure: err.message || "Invalid dot-bracket structure."
+                    structure: "Invalid dot-bracket structure."
                 }));
             } else if (err.status === 504) {
                 setFormErrors(prevErrors => ({
                     ...prevErrors,
-                    submit: "Server timeout. The algorithm is taking too long. Try reducing the number of steps or structure size."
+                    submit: "Server timeout."
                 }));
             } else {
                 setFormErrors(prevErrors => ({
                     ...prevErrors,
-                    submit: err.message || "An error occurred while processing your request. Please try again."
+                    submit: "An error occurred while processing your request. Please try again."
                 }));
             }
             
