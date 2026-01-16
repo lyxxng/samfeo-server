@@ -157,10 +157,15 @@ export default function InputPage() {
             };
 
             const SAMFEOPromise = fetch(`${API_URL}/samfeo_submit`, requestOptions)
-                .then(res => res.json().then(data => {
-                    if (!res.ok) throw new Error(data.error);
-                    SAMFEOResult = data;
-                }));
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    const error = new Error(data.error || 'Unknown error');
+                    error.status = res.status;
+                    throw error;
+                }
+                SAMFEOResult = data;
+            });
 
             requests.push(SAMFEOPromise);
         }
@@ -180,10 +185,15 @@ export default function InputPage() {
             };
 
             const fastDesignPromise = fetch(`${API_URL}/fastdesign_submit`, requestOptions)
-                .then(res => res.json().then(data => {
-                    if (!res.ok) throw new Error(data.error);
-                    fastDesignResult = data;
-                }));
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    const error = new Error(data.error || 'Unknown error');
+                    error.status = res.status;
+                    throw error;
+                }
+                fastDesignResult = data;
+            });
 
             requests.push(fastDesignPromise);
         }
@@ -201,12 +211,31 @@ export default function InputPage() {
 
         } catch (err) {
             console.error("Error:", err);
-            setFormErrors(prevErrors => ({
-                ...prevErrors,
-                structure: "Invalid dot-bracket structure."
-            }));
-            setLoading(false);
 
+            // Handle different error types
+            if (err.status === 408) {
+                setFormErrors(prevErrors => ({
+                    ...prevErrors,
+                    submit: "Request timed out. The algorithm exceeded the maximum time limit. Try reducing the number of steps or structure size."
+                }));
+            } else if (err.status === 400) {
+                setFormErrors(prevErrors => ({
+                    ...prevErrors,
+                    structure: err.message || "Invalid dot-bracket structure."
+                }));
+            } else if (err.status === 504) {
+                setFormErrors(prevErrors => ({
+                    ...prevErrors,
+                    submit: "Server timeout. The algorithm is taking too long. Try reducing the number of steps or structure size."
+                }));
+            } else {
+                setFormErrors(prevErrors => ({
+                    ...prevErrors,
+                    submit: err.message || "An error occurred while processing your request. Please try again."
+                }));
+            }
+            
+            setLoading(false);
             return;
         }
     };
