@@ -1,8 +1,15 @@
 const express = require("express");
 const path = require("path");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
 const PORT = 8083;
+
+// Proxy requests to flask backend
+app.use('/api', createProxyMiddleware({
+  target: 'http://10.217.112.20:5002',
+  changeOrigin: true
+}));
 
 // Absolute path to build folder
 const buildPath = path.join(__dirname, "build");
