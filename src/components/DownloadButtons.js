@@ -11,7 +11,7 @@ export default function DownloadButtons(
 ) {
     const handleDownload = async(fileName) => {
         try {
-            const response = await fetch(`${API_URL}/download/${fileName}`);
+            const response = await fetch(`${API_URL}/api/download/${fileName}`);
             if (!response.ok) throw new Error("File not found");
 
             const blob = await response.blob();

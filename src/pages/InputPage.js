@@ -156,7 +156,7 @@ export default function InputPage() {
                 })
             };
 
-            const SAMFEOPromise = fetch(`${API_URL}/samfeo_submit`, requestOptions)
+            const SAMFEOPromise = fetch(`${API_URL}/api/samfeo_submit`, requestOptions)
                 .then(res => res.json().then(data => {
                     if (!res.ok) throw new Error(data.error);
                     SAMFEOResult = data;
@@ -179,7 +179,7 @@ export default function InputPage() {
                 })
             };
 
-            const fastDesignPromise = fetch(`${API_URL}/fastdesign_submit`, requestOptions)
+            const fastDesignPromise = fetch(`${API_URL}/api/fastdesign_submit`, requestOptions)
                 .then(res => res.json().then(data => {
                     if (!res.ok) throw new Error(data.error);
                     fastDesignResult = data;

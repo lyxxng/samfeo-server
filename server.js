@@ -1,15 +1,8 @@
 const express = require("express");
 const path = require("path");
-const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
 const PORT = 8083;
-
-app.use("/api", createProxyMiddleware({
-  target: "http://127.0.0.1:5002",
-  changeOrigin: true,
-})
-);
 
 // Absolute path to build folder
 const buildPath = path.join(__dirname, "build");
