@@ -1,7 +1,7 @@
 // Default values for form inputs
 
 export const DEFAULT_VALUES = {
-    structure: "(((((......))))))",
+    structure: "(((((......)))))",
     temperature: "1",
     queue: "10",
     step: "5000",
