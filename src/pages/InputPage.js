@@ -164,7 +164,7 @@ export default function InputPage() {
                     <FormDivider />
 
                     <Row>
-                        <Col lg={6} style={{ marginBottom: '2rem' }}>
+                        <Col lg={6}>
                             <FastDesignForm
                                 enabled={fastDesignEnabled}
                                 onEnabledChange={(e) => setFastDesignEnabled(e.target.checked)}
