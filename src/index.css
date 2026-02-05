@@ -120,3 +120,9 @@ h3 {
 textarea {
   font-family: monospace, monospace;
 }
+
+@media (min-width: 992px) {
+  .d-lg-none {
+    display: none !important;
+  }
+}

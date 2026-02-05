@@ -164,7 +164,7 @@ export default function InputPage() {
                     <FormDivider />
 
                     <Row>
-                        <Col lg={6} style={{ marginBottom: '1.5rem' }}>
+                        <Col lg={6} style={{ marginBottom: '2rem' }}>
                             <FastDesignForm
                                 enabled={fastDesignEnabled}
                                 onEnabledChange={(e) => setFastDesignEnabled(e.target.checked)}
@@ -172,6 +172,11 @@ export default function InputPage() {
                                 motifstepRef={motifstepField}
                                 poststepRef={poststepField}
                                 pruneRef={pruneField} />
+                            
+                            {/* Divider only visible on mobile */}
+                            <div className="d-lg-none">
+                                <FormDivider />
+                            </div>
                         </Col>
                         <Col lg={6}>
                             <SAMFEOForm
