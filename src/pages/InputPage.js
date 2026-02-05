@@ -1,13 +1,14 @@
 /* TODO
    - Allow user to input text file
    - Select sample structures from dropdown
-   - Reset button for arguments
 */
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import Body from '../components/Body';
 import InputField from '../components/InputField';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -15,14 +16,15 @@ import Citation from '../components/Citation';
 import SAMFEOForm from '../components/SAMFEOForm';
 import FastDesignForm from '../components/FastDesignForm';
 import FormDivider from '../components/FormDivider';
+import { DEFAULT_VALUES } from '../constants/formDefaults';
 import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
 import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
 
 export default function InputPage() {
     const [formErrors, setFormErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [SAMFEOEnabled, setSAMFEOEnabled] = useState(false);
-    const [fastDesignEnabled, setFastDesignEnabled] = useState(true);
+    const [SAMFEOEnabled, setSAMFEOEnabled] = useState(DEFAULT_VALUES.samfeoEnabled);
+    const [fastDesignEnabled, setFastDesignEnabled] = useState(DEFAULT_VALUES.fastDesignEnabled);
 
     const navigate = useNavigate();
 
@@ -38,6 +40,24 @@ export default function InputPage() {
     useEffect(() => {
         structureField.current.focus();
     }, []);
+
+    const reset = () => {
+        // Reset all text fields to defaults
+        structureField.current.value = DEFAULT_VALUES.structure;
+        temperatureField.current.value = DEFAULT_VALUES.temperature;
+        queueField.current.value = DEFAULT_VALUES.queue;
+        stepField.current.value = DEFAULT_VALUES.step;
+        motifstepField.current.value = DEFAULT_VALUES.motifstep;
+        poststepField.current.value = DEFAULT_VALUES.poststep;
+        pruneField.current.value = DEFAULT_VALUES.prune;
+
+        // Reset checkboxes
+        setSAMFEOEnabled(DEFAULT_VALUES.samfeoEnabled);
+        setFastDesignEnabled(DEFAULT_VALUES.fastDesignEnabled);
+
+        // Clear any errors
+        setFormErrors({});
+    };
 
     const onSubmit = async (ev) => {
         ev.preventDefault();
@@ -89,29 +109,21 @@ export default function InputPage() {
         // If no errors, display loading symbol
         setLoading(true);
 
-        console.log(structure, temperature, queue, step, object);
-        console.log(structure, motifstep, poststep, prune, path);
-
         let SAMFEOResult = null;
         let fastDesignResult = null;
-
         const requests = [];
 
         // SAMFEO request
         if (samfeo) {
             const SAMFEOPromise = submitSAMFEO(structure, temperature, queue, step, object)
-                .then(data => {
-                    SAMFEOResult = data;
-                });
+                .then(data => { SAMFEOResult = data; });
             requests.push(SAMFEOPromise);
         }
 
         // SAMFEO++ request
         if (fastdesign) {
             const fastDesignPromise = submitFastDesign(structure, motifstep, poststep, prune, path)
-                .then(data => {
-                    fastDesignResult = data;
-                });
+                .then(data => { fastDesignResult = data; });
             requests.push(fastDesignPromise);
         }
 
@@ -125,7 +137,6 @@ export default function InputPage() {
                     f: fastDesignResult
                 }
             });
-
         } catch (err) {
             console.error("Error:", err);
             setFormErrors(prevErrors => ({
@@ -133,7 +144,6 @@ export default function InputPage() {
                 ...handleAPIError(err)
             }));
             setLoading(false);
-            return;
         }
     };
 
@@ -143,41 +153,52 @@ export default function InputPage() {
                 <h3>Add a dot-bracket structure</h3>
                 <Form onSubmit={onSubmit}>
                     <InputField
-                        name="structure" as={"textarea"} rows={5}
+                        name="structure"
+                        as="textarea"
+                        rows={5}
                         label={<span><b>Type</b> or <b>paste</b> your dot-bracket structure here (length &gt; 5):</span>}
-                        value={"(((((......)))))"}
-                        error={formErrors.structure} fieldRef={structureField} />
+                        value={DEFAULT_VALUES.structure}
+                        error={formErrors.structure}
+                        fieldRef={structureField} />
                     
                     <FormDivider />
 
-                    <FastDesignForm
-                        enabled={fastDesignEnabled}
-                        onEnabledChange={(e) => setFastDesignEnabled(e.target.checked)}
-                        formErrors={formErrors}
-                        motifstepRef={motifstepField}
-                        poststepRef={poststepField}
-                        pruneRef={pruneField} />
-                    
-                    <FormDivider />
-
-                    <SAMFEOForm
-                        enabled={SAMFEOEnabled}
-                        onEnabledChange={(e) => setSAMFEOEnabled(e.target.checked)}
-                        formErrors={formErrors}
-                        temperatureRef={temperatureField}
-                        queueRef={queueField}
-                        stepRef={stepField} />
+                    <Row>
+                        <Col lg={6} style={{ marginBottom: '1.5rem' }}>
+                            <FastDesignForm
+                                enabled={fastDesignEnabled}
+                                onEnabledChange={(e) => setFastDesignEnabled(e.target.checked)}
+                                formErrors={formErrors}
+                                motifstepRef={motifstepField}
+                                poststepRef={poststepField}
+                                pruneRef={pruneField} />
+                        </Col>
+                        <Col lg={6}>
+                            <SAMFEOForm
+                                enabled={SAMFEOEnabled}
+                                onEnabledChange={(e) => setSAMFEOEnabled(e.target.checked)}
+                                formErrors={formErrors}
+                                temperatureRef={temperatureField}
+                                queueRef={queueField}
+                                stepRef={stepField} />
+                        </Col>
+                    </Row>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '30px' }}>
-                        <Button name="submit" variant="primary" type="submit">Run</Button>
-                        {loading && <LoadingSpinner></LoadingSpinner>}
+                        <Button name="submit" variant="primary" type="submit" disabled={loading}>
+                            Run
+                        </Button>
+                        <Button variant="secondary" type="button" onClick={reset} disabled={loading}>
+                            Reset Arguments
+                        </Button>
+                        {loading && <LoadingSpinner />}
                     </div>
 
                     <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
                 </Form>
             </div>
             
-            <Citation></Citation>
+            <Citation />
             
         </Body>
     );
