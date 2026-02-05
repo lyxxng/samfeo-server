@@ -6,23 +6,22 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
 import InputField from '../components/InputField';
-import CheckBox from '../components/CheckBox';
-import RadioButton from '../components/RadioButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Citation from '../components/Citation';
-
-const API_URL = process.env.REACT_APP_API_URL;
+import SAMFEOForm from '../components/SAMFEOForm';
+import FastDesignForm from '../components/FastDesignForm';
+import FormDivider from '../components/FormDivider';
+import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
+import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
 
 export default function InputPage() {
     const [formErrors, setFormErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [SAMFEOEnabled, setSAMFEOEnabled] = useState(true);
+    const [SAMFEOEnabled, setSAMFEOEnabled] = useState(false);
     const [fastDesignEnabled, setFastDesignEnabled] = useState(true);
 
     const navigate = useNavigate();
@@ -73,56 +72,12 @@ export default function InputPage() {
 
         // Validation for SAMFEO arguments
         if (samfeo) {
-            if (!temperature) {
-                errors.temperature = 'Specify a sampling temperature.';
-            } else if (!/^\d+$/.test(temperature)) {
-                errors.temperature = 'Must be a numerical value.';
-            } else if (Number(temperature) < 0.1 || Number(temperature) > 10) {
-                errors.temperature = 'Sampling temperature must be between 0.1 and 10.';
-            }
-
-            if (!queue) {
-                errors.queue = 'Specify a frontier size.';
-            } else if (!/^\d+$/.test(queue)) {
-                errors.queue = 'Must be a numerical value.';
-            } else if (Number(queue) < 1 || Number(queue) > 10) {
-                errors.queue = 'Frontier size must be between 1 and 10.';
-            }
-
-            if (!step) {
-                errors.step = 'Specify a step value.';
-            } else if (!/^\d+$/.test(step)) {
-                errors.step = 'Must be a numerical value.';
-            } else if (Number(step) < 100 || Number(step) > 10000) {
-                errors.step = 'Step value must be between 100 and 10000.';
-            }
+            Object.assign(errors, validateSAMFEOInputs(temperature, queue, step));
         }
         
         // Validation for SAMFEO++ arguments
         if (fastdesign) {
-            if (!motifstep) {
-                errors.motifstep = 'Specify a step value.';
-            } else if (!/^\d+$/.test(motifstep)) {
-                errors.motifstep = 'Must be a numerical value.';
-            } else if (Number(motifstep) < 100 || Number(motifstep) > 10000) {
-                errors.motifstep = 'Step value must be between 100 and 10000.';
-            }
-
-            if (!poststep) {
-                errors.poststep = 'Specify a step value.';
-            } else if (!/^\d+$/.test(poststep)) {
-                errors.poststep = 'Must be a numerical value.';
-            } else if (Number(poststep) < 0 || Number(poststep) > 2500) {
-                errors.poststep = 'Step value must be between 0 and 2500.';
-            }
-
-            if (!prune) {
-                errors.prune = 'Specify a beam size.';
-            } else if (!/^\d+$/.test(prune)) {
-                errors.prune = 'Must be a numerical value.';
-            } else if (Number(prune) < 10 || Number(prune) > 100) {
-                errors.prune = 'Beam size must be between 10 and 100.';
-            }
+            Object.assign(errors, validateFastDesignInputs(motifstep, poststep, prune));
         }
 
         // Display any errors and stop submission
@@ -144,78 +99,19 @@ export default function InputPage() {
 
         // SAMFEO request
         if (samfeo) {
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    structure: structure,
-                    temperature: temperature,
-                    queue: queue,
-                    step: step,
-                    object: object
-                })
-            };
-
-            const SAMFEOPromise = fetch(`${API_URL}/samfeo_submit`, requestOptions)
-                .then(async (res) => {
-                    // Check content type before parsing
-                    const contentType = res.headers.get("content-type");
-                    
-                    if (contentType && contentType.includes("application/json")) {
-                        const data = await res.json();
-                        if (!res.ok) {
-                            const error = new Error(data.error || 'Unknown error');
-                            error.status = res.status;
-                            throw error;
-                        }
-                        SAMFEOResult = data;
-                    } else {
-                        // Got HTML or other non-JSON response
-                        const error = new Error('Server error');
-                        error.status = res.status;
-                        throw error;
-                    }
+            const SAMFEOPromise = submitSAMFEO(structure, temperature, queue, step, object)
+                .then(data => {
+                    SAMFEOResult = data;
                 });
-
             requests.push(SAMFEOPromise);
         }
 
-
         // SAMFEO++ request
         if (fastdesign) {
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    structure: structure,
-                    step: motifstep,
-                    poststep: poststep,
-                    k_prune: prune,
-                    motif_path: path
-                })
-            };
-
-            const fastDesignPromise = fetch(`${API_URL}/fastdesign_submit`, requestOptions)
-                .then(async (res) => {
-                    // Check content type before parsing
-                    const contentType = res.headers.get("content-type");
-                    
-                    if (contentType && contentType.includes("application/json")) {
-                        const data = await res.json();
-                        if (!res.ok) {
-                            const error = new Error(data.error || 'Unknown error');
-                            error.status = res.status;
-                            throw error;
-                        }
-                        fastDesignResult = data;
-                    } else {
-                        // Got HTML or other non-JSON response
-                        const error = new Error('Server error');
-                        error.status = res.status;
-                        throw error;
-                    }
+            const fastDesignPromise = submitFastDesign(structure, motifstep, poststep, prune, path)
+                .then(data => {
+                    fastDesignResult = data;
                 });
-
             requests.push(fastDesignPromise);
         }
 
@@ -232,30 +128,10 @@ export default function InputPage() {
 
         } catch (err) {
             console.error("Error:", err);
-
-            // Handle different error types
-            if (err.status === 408) {
-                setFormErrors(prevErrors => ({
-                    ...prevErrors,
-                    submit: "Request timed out."
-                }));
-            } else if (err.status === 400) {
-                setFormErrors(prevErrors => ({
-                    ...prevErrors,
-                    structure: "Invalid dot-bracket structure."
-                }));
-            } else if (err.status === 504) {
-                setFormErrors(prevErrors => ({
-                    ...prevErrors,
-                    submit: "Server timeout."
-                }));
-            } else {
-                setFormErrors(prevErrors => ({
-                    ...prevErrors,
-                    submit: "An error occurred while processing your request. Please try again."
-                }));
-            }
-            
+            setFormErrors(prevErrors => ({
+                ...prevErrors,
+                ...handleAPIError(err)
+            }));
             setLoading(false);
             return;
         }
@@ -272,87 +148,29 @@ export default function InputPage() {
                         value={"(((((......)))))"}
                         error={formErrors.structure} fieldRef={structureField} />
                     
-                    <hr style={{
-                        margin: '2rem 0',
-                        borderTop: '2px solid',
-                        opacity: '0.5'
-                    }} />
+                    <FormDivider />
 
-                    <h3>SAMFEO Arguments</h3>
-                    <CheckBox
-                        name="samfeo"
-                        label="Find design using SAMFEO"
-                        checked={SAMFEOEnabled}
-                        onChange={(e) => setSAMFEOEnabled(e.target.checked)} />
-
-                    <Row>
-                        <Col md={5} lg={6}>
-                            <InputField
-                            name="temperature" label={<span><b>Sampling temperature</b> (0.1 - 10)</span>}
-                            value={"1"} error={formErrors.temperature} fieldRef={temperatureField}
-                            disabled={!SAMFEOEnabled} />
-                            <InputField
-                            name="queue" label={<span><b>Frontier (priority queue) size</b> (1 - 10)</span>}
-                            value={"10"} error={formErrors.queue} fieldRef={queueField}
-                            disabled={!SAMFEOEnabled} />
-                            <InputField
-                            name="step" label={<span><b>Number of steps</b> (100 - 10000)</span>}
-                            value={"5000"} error={formErrors.step} fieldRef={stepField}
-                            disabled={!SAMFEOEnabled} />
-                        </Col>
-                    </Row>
+                    <FastDesignForm
+                        enabled={fastDesignEnabled}
+                        onEnabledChange={(e) => setFastDesignEnabled(e.target.checked)}
+                        formErrors={formErrors}
+                        motifstepRef={motifstepField}
+                        poststepRef={poststepField}
+                        pruneRef={pruneField} />
                     
-                    <RadioButton
-                        label={<span><b>Optimization objective</b></span>}
-                        name={"object"} defaultValue={"pd"}
-                        options={[
-                            { label: "Probability defect", value: "pd" },
-                            { label: "Normalized ensemble defect", value: "ned" }
-                        ]}
-                        disabled={!SAMFEOEnabled} />
-                    
-                    <hr style={{
-                        margin: '2rem 0',
-                        borderTop: '2px solid',
-                        opacity: '0.5'
-                    }} />
+                    <FormDivider />
 
-                    <h3>SAMFEO++ Arguments</h3>
-                    <CheckBox
-                        name="fastdesign"
-                        label="Find design using SAMFEO++"
-                        checked={fastDesignEnabled}
-                        onChange={(e) => setFastDesignEnabled(e.target.checked)} />
-
-                    <Row>
-                        <Col md={5} lg={6}>
-                            <InputField
-                                name="motifstep" value={"5000"} error={formErrors.motifstep} fieldRef={motifstepField}
-                                label={<span><b>Number of steps for leaf-node (motif-level) design</b> (100 - 10000)</span>}
-                                disabled={!fastDesignEnabled} />
-                            <InputField
-                                name="poststep" value={"0"} error={formErrors.poststep} fieldRef={poststepField}
-                                label={<span><b>Number of steps for root-node (full structure) refinement</b> (0 - 2500)</span>}
-                                disabled={!fastDesignEnabled} />
-                            <InputField
-                                name="prune" label={<span><b>Beam size for cubic pruning</b> (10 - 100)</span>}
-                                value={"90"} error={formErrors.prune} fieldRef={pruneField}
-                                disabled={!fastDesignEnabled} />
-                        </Col>
-                    </Row>
-
-                    <RadioButton
-                        label={<span><b>Motifs used for structure decomposition</b></span>}
-                        name={"path"} defaultValue="easy"
-                        options={[
-                            { label: "Easy motifs", value: "easy" },
-                            { label: "Helix motifs", value: "helix" }
-                        ]}
-                        disabled={!fastDesignEnabled} />
+                    <SAMFEOForm
+                        enabled={SAMFEOEnabled}
+                        onEnabledChange={(e) => setSAMFEOEnabled(e.target.checked)}
+                        formErrors={formErrors}
+                        temperatureRef={temperatureField}
+                        queueRef={queueField}
+                        stepRef={stepField} />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '30px' }}>
-                    <Button name="submit" variant="primary" type="submit">Run</Button>
-                    {loading && <LoadingSpinner></LoadingSpinner>}
+                        <Button name="submit" variant="primary" type="submit">Run</Button>
+                        {loading && <LoadingSpinner></LoadingSpinner>}
                     </div>
 
                     <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
