@@ -11,7 +11,9 @@ app.use('/samfeo/api', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/samfeo/api': '/api'  // Strip the /samfeo prefix
-  }
+  },
+  proxyTimeout: 900000,
+  timeout: 900000,
 }));
 
 // Absolute path to build folder
@@ -20,11 +22,15 @@ const buildPath = path.join(__dirname, "build");
 // Serve static assets under /samfeo
 app.use("/samfeo", express.static(buildPath));
 
-// 2. SPA fallback
+// SPA fallback
 app.get("/samfeo/*", (req, res) => {
   res.sendFile(path.join(buildPath, "index.html"));
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+const server =  app.listen(PORT, "0.0.0.0", () => {
   console.log(`App running at http://127.0.0.1:${PORT}/samfeo/`);
 });
+
+server.timeout = 900000;
+server.keepAliveTimeout = 900000;
+server.headersTimeout = 905000;
