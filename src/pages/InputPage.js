@@ -15,7 +15,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Citation from '../components/Citation';
 import SAMFEOForm from '../components/SAMFEOForm';
 import FastDesignForm from '../components/FastDesignForm';
-import FormDivider from '../components/FormDivider';
+import Divider from '../components/Divider';
 import { DEFAULT_VALUES } from '../constants/formDefaults';
 import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
 import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
@@ -36,9 +36,10 @@ export default function InputPage() {
     const poststepField = useRef();
     const pruneField = useRef();
 
-    // Cursor in structure text area
+    // Cursor in structure text area and scroll to top
     useEffect(() => {
         structureField.current.focus();
+        window.scrollTo(0, 0);
     }, []);
 
     const reset = () => {
@@ -161,7 +162,7 @@ export default function InputPage() {
                         error={formErrors.structure}
                         fieldRef={structureField} />
                     
-                    <FormDivider />
+                    <Divider />
 
                     <Row>
                         <Col lg={6}>
@@ -175,7 +176,7 @@ export default function InputPage() {
                             
                             {/* Divider only visible on mobile */}
                             <div className="d-lg-none">
-                                <FormDivider />
+                                <Divider />
                             </div>
                         </Col>
                         <Col lg={6}>
