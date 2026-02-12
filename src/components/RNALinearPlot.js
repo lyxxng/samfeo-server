@@ -3,7 +3,7 @@
  * plot using plotly. Allows user to toggle between different sequences.
  */
 
-// TODO: Maybe get rid of MFE and uMFE option?
+// TODO: Maybe get rid of MFE and uMFE option? [x]
 
 import { useEffect, useState } from 'react';
 import Plotly from 'plotly.js-basic-dist';
@@ -112,8 +112,8 @@ export default function RNALinearPlot(
                             value={selectedProgram}
                             onChange={(e) => setSelectedProgram(e.target.value)}
                         >
-                            <option value="SAMFEO">SAMFEO</option>
                             <option value="SAMFEO++">SAMFEO++</option>
+                            <option value="SAMFEO">SAMFEO</option>
                         </select>
                     </div>
                 )}
@@ -136,7 +136,7 @@ export default function RNALinearPlot(
                 layout={currentPlot.layout}
                 config={{
                     responsive: true,
-                    modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'lasso2d', 'select2d', 'resetScale2d'],
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d'],
                     displaylogo: false,
                     toImageButtonOptions: {
                         format: 'png',
@@ -146,7 +146,7 @@ export default function RNALinearPlot(
                         scale: 2
                     }
                 }}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', overflowX: 'auto' }}
             />
 
             <div className="rna-plot-legends">

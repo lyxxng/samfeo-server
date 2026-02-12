@@ -39,6 +39,6 @@ export const SEQ = {
     'prob_seq': 'Best Probability',
     'ned_seq': 'Best NED',
     'dist_seq': 'Best Distance',
-    'mfe_sample': 'MFE Example',
-    'umfe_sample': 'uMFE Example'
+    // 'mfe_sample': 'MFE Example',
+    // 'umfe_sample': 'uMFE Example'
 }
