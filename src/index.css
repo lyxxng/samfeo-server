@@ -7,6 +7,14 @@ textarea {
   font-family: monospace, monospace;
 }
 
+select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  min-width: 200px;
+}
+
 .Header {
   border-bottom: 1px solid #ddd;
   margin-bottom: 1.5rem;
@@ -130,26 +138,6 @@ textarea {
   transform: translateX(-50%);
   font-size: 14px;
   font-weight: 400;
-}
-
-
-/* Dropdown select */
-.dropdown-select {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dropdown-select__label {
-  font-weight: 600;
-  min-width: 80px;
-  color: rgb(15, 23, 42);
-}
-
-.dropdown-select__toggle {
-  min-width: 150px;
-  text-align: left;
-  font-size: 14px;
 }
 
 

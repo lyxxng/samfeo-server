@@ -6,11 +6,13 @@
 // TODO: Maybe get rid of MFE and uMFE option?
 
 import { useEffect, useState } from 'react';
-import Plot from 'react-plotly.js';
+import Plotly from 'plotly.js-basic-dist';
+import createPlotlyComponent from 'react-plotly.js/factory';
 import GradientLegend from './GradientLegend';
-import DropdownSelect from './DropdownSelect';
 import { fetchAllRNAPlots } from '../services/api';
 import { C_COLORS, I_COLORS, C_LABELS, I_LABELS, SEQ } from '../constants/plotValues';
+
+const Plot = createPlotlyComponent(Plotly);
 
 export default function RNALinearPlot(
     { samfeoData, fastDesignData }
@@ -67,7 +69,7 @@ export default function RNALinearPlot(
         if (samfeoData || fastDesignData) {
             fetchAllPlotData();
         }
-    }, [samfeoData, fastDesignData]);
+    }, [samfeoData, fastDesignData, SEQ_KEYS]);
 
     const getCurrentPlot = () => {
         if (!allPlotsData[selectedProgram]) return null;
@@ -107,20 +109,29 @@ export default function RNALinearPlot(
         <div className="rna-plot-container">
             <div className="rna-plot-controls">
                 {showProgramDropdown && (
-                    <DropdownSelect
-                        label="Program:"
-                        value={selectedProgram}
-                        onSelect={setSelectedProgram}
-                        options={PROGRAM_OPTIONS}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label style={{ fontWeight: 'bold', minWidth: '80px' }}>Program:</label>
+                        <select
+                            value={selectedProgram}
+                            onChange={(e) => setSelectedProgram(e.target.value)}
+                        >
+                            <option value="SAMFEO">SAMFEO</option>
+                            <option value="SAMFEO++">SAMFEO++</option>
+                        </select>
+                    </div>
                 )}
 
-                <DropdownSelect
-                    label="Sequence:"
-                    value={selectedSeq}
-                    onSelect={setSelectedSeq}
-                    options={SEQ}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ fontWeight: 'bold', minWidth: '80px' }}>Sequence:</label>
+                    <select
+                        value={selectedSeq}
+                        onChange={(e) => setSelectedSeq(e.target.value)}
+                    >
+                        {Object.entries(SEQ).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             <Plot

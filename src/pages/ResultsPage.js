@@ -58,10 +58,6 @@ export default function ResultsPage() {
                     fastDesign={f}
                 />
 
-                <Button variant="secondary" type="button" onClick={goBack}>
-                    &larr; Go back
-                </Button>
-
                 <Divider />
 
                 <h3>Base Pairing Probability Visualization</h3>
@@ -69,6 +65,10 @@ export default function ResultsPage() {
                     samfeoData={s}
                     fastDesignData={f}
                 />
+
+                <Button variant="secondary" type="button" onClick={goBack}>
+                    &larr; Go back
+                </Button>
             </div>
         </Body>
     );
