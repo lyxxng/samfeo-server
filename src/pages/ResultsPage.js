@@ -11,7 +11,6 @@ import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
 import ResultsTable from '../components/ResultsTable';
 import DownloadButtons from '../components/DownloadButtons';
-import NoResults from '../components/NoResults';
 import Divider from '../components/Divider';
 import RNALinearPlot from '../components/RNALinearPlot';
 import { METRICS } from '../constants/resultsMetrics';
@@ -31,7 +30,7 @@ export default function ResultsPage() {
     };
 
     if (!data) {
-        return <NoResults />;
+        return <p>No results found.</p>;
     }
 
     const { s, f } = data;

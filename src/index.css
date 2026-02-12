@@ -146,6 +146,10 @@ select {
   width: 100%;
 }
 
+.rna-plot-container .modebar {
+  position: sticky !important;
+}
+
 .rna-plot-message {
   text-align: center;
   padding: 40px;

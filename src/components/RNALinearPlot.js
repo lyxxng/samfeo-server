@@ -81,7 +81,7 @@ export default function RNALinearPlot(
     if (loading) {
         return (
             <div className="rna-plot-message">
-                <p>Loading RNA structure plots...</p>
+                <p>Loading RNA base pairing probability plots...</p>
             </div>
         );
     }
@@ -89,7 +89,7 @@ export default function RNALinearPlot(
     if (error) {
         return (
             <div className="rna-plot-message rna-plot-message--error">
-                <p>An error occurred while loading the plot</p>
+                <p>An error occurred while loading the plot.</p>
             </div>
         );
     }
@@ -97,7 +97,7 @@ export default function RNALinearPlot(
     if (!currentPlot) {
         return (
             <div className="rna-plot-message">
-                <p>No plot data available for selected options</p>
+                <p>No plot data available for selected options.</p>
             </div>
         );
     }
