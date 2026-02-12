@@ -114,7 +114,6 @@ def draw_rna_linear(bpp, seq, seq_len, pairs):
                 bgcolor="white",
                 font_size=13,
                 font_family="Arial",
-                bordercolor=color
             )
         ))
     
@@ -149,7 +148,6 @@ def draw_rna_linear(bpp, seq, seq_len, pairs):
                     bgcolor="white",
                     font_size=13,
                     font_familiy="Arial",
-                    bordercolor="#FFA000"
                 )
             ))
 
@@ -173,7 +171,7 @@ def draw_rna_linear(bpp, seq, seq_len, pairs):
         fig.add_annotation(x=index, y=indices_height, text=str(index + 1), showarrow=False, font=dict(size=13))
 
     figwidth = max(12, seq_len // 15) * 100
-    figheight = 10 * 100
+    figheight = 6 * 100
 
     fig.update_layout(
         width=figwidth,
