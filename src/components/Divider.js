@@ -1,4 +1,4 @@
-export default function FormDivider() {
+export default function Divider() {
     return (
         <hr style={{
             margin: '2rem 0',

@@ -3,6 +3,10 @@
   padding-bottom: 30px;
 }
 
+textarea {
+  font-family: monospace, monospace;
+}
+
 .Header {
   border-bottom: 1px solid #ddd;
   margin-bottom: 1.5rem;
@@ -11,6 +15,25 @@
   color: rgb(15, 23, 42);
   padding: 1rem 1.5rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.input-card {
+  background-color: white;
+  padding: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+}
+
+.results-card {
+  background-color: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  padding-bottom: 2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
 }
 
 .InputField {
@@ -28,10 +51,142 @@
   margin-bottom: 15px;
 }
 
+
+/* Table styles */
 .ResultsTable {
+  border-collapse: collapse;
+  overflow: hidden;
+  margin-bottom: 2rem;
   margin-top: 15px;
 }
 
+.ResultsTable td {
+  padding: 1rem 1rem;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.table td.text-emerald {
+  color: rgb(5, 150, 105);
+}
+
+.table td.text-slate {
+  color: rgb(71, 85, 105);
+}
+
+.method-header th {
+  background: rgb(41, 53, 72);
+  color: white;
+  padding: 1.25rem 1.25rem;
+  border: none;
+}
+
+
+/* Downloads section */
+.results-download {
+  margin-bottom: 1.75rem;
+}
+
+.downloads-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: rgb(15, 23, 42);
+}
+
+
+/* Gradient legend */
+.gradient-legend {
+  display: inline-block;
+  margin-right: 30px;
+}
+
+.gradient-legend__title {
+  font-size: 15px;
+  margin-bottom: 5px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.gradient-legend__bar {
+  display: flex;
+  height: 30px;
+  width: 300px;
+  position: relative;
+}
+
+.gradient-legend__square {
+  flex: 1;
+  height: 100%
+}
+
+.gradient-legend__labels {
+  position: relative;
+  width: 300px;
+  height: 20px;
+  margin-top: 5px;
+}
+
+.gradient-legend__label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+
+/* Dropdown select */
+.dropdown-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-select__label {
+  font-weight: 600;
+  min-width: 80px;
+  color: rgb(15, 23, 42);
+}
+
+.dropdown-select__toggle {
+  min-width: 150px;
+  text-align: left;
+  font-size: 14px;
+}
+
+
+/* RNA linear plot */
+.rna-plot-container {
+  width: 100%;
+}
+
+.rna-plot-message {
+  text-align: center;
+  padding: 40px;
+}
+
+.rna-plot-message--error {
+  color: #dc3545;
+}
+
+.rna-plot-controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 15px;
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.rna-plot-legends {
+  display: flex;
+  gap: 100px;
+  margin-bottom: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
+/* Typography */
 .font-bold {
   font-weight: 700;
 }
@@ -52,63 +207,8 @@
   text-transform: uppercase;
 }
 
-.table td.text-emerald {
-  color: rgb(5, 150, 105);
-}
-
 .mono {
   font-family: 'Fira Code', monospace;
-}
-
-.table td.text-slate {
-  color: rgb(71, 85, 105);
-}
-
-.ResultsTable {
-  border-collapse: collapse;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.method-header th {
-  background: rgb(41, 53, 72);
-  color: white;
-  padding: 1.25rem 1.25rem;
-  border: none;
-}
-
-.ResultsTable td {
-  padding: 1rem 1rem;
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.results-card {
-  background-color: white;
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  padding: 1.5rem;
-  padding-bottom: 2rem;
-  margin-top: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.input-card {
-  background-color: white;
-  padding: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 2rem;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-radius: 0.5rem;
-}
-
-.results-download {
-  margin-bottom: 1.75rem;
-}
-
-.downloads-label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: rgb(15, 23, 42);
 }
 
 h3 {
@@ -117,10 +217,8 @@ h3 {
   font-weight: 600;
 }
 
-textarea {
-  font-family: monospace, monospace;
-}
 
+/* Responsive */
 @media (min-width: 992px) {
   .d-lg-none {
     display: none !important;

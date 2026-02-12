@@ -20,6 +20,7 @@ const handleResponse = async (res) => {
     }
 };
 
+// Design RNA using SAMFEO
 export const submitSAMFEO = async (structure, temperature, queue, step, object) => {
     const requestOptions = {
         method: 'POST',
@@ -37,6 +38,7 @@ export const submitSAMFEO = async (structure, temperature, queue, step, object) 
     return handleResponse(res);
 };
 
+// Design RNA using SAMFEO++
 export const submitFastDesign = async (structure, motifstep, poststep, prune, path) => {
     const requestOptions = {
         method: 'POST',
@@ -54,6 +56,7 @@ export const submitFastDesign = async (structure, motifstep, poststep, prune, pa
     return handleResponse(res);
 };
 
+// SAMFEO & SAMFEO++ errors
 export const handleAPIError = (err) => {
     if (err.status === 408) {
         return { submit: "Request timed out." };
@@ -64,4 +67,40 @@ export const handleAPIError = (err) => {
     } else {
         return { submit: "An error occurred while processing your request. Please try again." };
     }
+};
+
+// Fetch a single RNA plot
+export const fetchRNAPlot = async (structure, sequence) => {
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            structure,
+            sequence
+        })
+    };
+
+    const res = await fetch(`${API_URL}/rna_plot`, requestOptions);
+    const data = await handleResponse(res);
+
+    return JSON.parse(data.plotly_data);
+};
+
+// Fetch all RNA plots for a given program's data
+export const fetchAllRNAPlots = async (programData, sequenceKeys) => {
+    const plots = {};
+
+    for (const seqKey of sequenceKeys) {
+        const sequence = programData[seqKey];
+
+        if (sequence) {
+            try {
+                plots[seqKey] = await fetchRNAPlot(programData.structure, sequence);
+            } catch (err) {
+                console.error(`Error fetching plot for ${seqKey}:`, err);
+            }
+        }
+    }
+
+    return plots;
 };

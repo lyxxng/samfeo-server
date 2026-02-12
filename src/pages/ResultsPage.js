@@ -1,14 +1,19 @@
 /* TODO
    - Copy structures and sequences to clipboard
    - Display figures of structures (stretch goal)
+        - [x] Base pairing probability
+        - Secondary structure
 */
 
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
 import ResultsTable from '../components/ResultsTable';
 import DownloadButtons from '../components/DownloadButtons';
 import NoResults from '../components/NoResults';
+import Divider from '../components/Divider';
+import RNALinearPlot from '../components/RNALinearPlot';
 import { METRICS } from '../constants/resultsMetrics';
 import { buildTableHeaders, buildTableRows } from '../utils/tableBuilder';
 
@@ -16,6 +21,10 @@ export default function ResultsPage() {
     const location = useLocation();
     const data = location.state;
     const navigate = useNavigate();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const goBack = () => {
         navigate('/');
@@ -52,6 +61,14 @@ export default function ResultsPage() {
                 <Button variant="secondary" type="button" onClick={goBack}>
                     &larr; Go back
                 </Button>
+
+                <Divider />
+
+                <h3>Base Pairing Probability Visualization</h3>
+                <RNALinearPlot
+                    samfeoData={s}
+                    fastDesignData={f}
+                />
             </div>
         </Body>
     );
