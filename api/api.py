@@ -3,17 +3,20 @@ from flask_cors import CORS
 import json
 import subprocess
 import os
+import sys
 import time
 import threading
 from pathlib import Path
 import random
-from linear_plot import get_linear_plot
 
 app = Flask(__name__)
 CORS(app)
 
 # /app/api
 PARENT = Path(__file__).parent
+sys.path.insert(0, str(PARENT))
+
+from linear_plot import get_linear_plot
 
 # /app/api/../../tmp/samfeo_tmp
 TEMP_DIR = (PARENT / ".." / ".." / "tmp" / "samfeo_tmp")

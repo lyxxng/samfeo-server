@@ -147,7 +147,7 @@ def draw_rna_linear(bpp, seq, seq_len, pairs):
                 hoverlabel=dict(
                     bgcolor="white",
                     font_size=13,
-                    font_familiy="Arial",
+                    font_family="Arial",
                 )
             ))
 
