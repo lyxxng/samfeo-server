@@ -137,7 +137,7 @@ export default function RNALinearPlot(
                 config={{
                     responsive: true,
                     modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'lasso2d', 'select2d', 'resetScale2d'],
-                    displayLogo: false,
+                    displaylogo: false,
                     toImageButtonOptions: {
                         format: 'png',
                         filename: 'rna_structure_bpp',

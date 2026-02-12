@@ -168,7 +168,7 @@ select {
 .rna-plot-legends {
   display: flex;
   gap: 100px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   justify-content: center;
   flex-wrap: wrap;
 }
