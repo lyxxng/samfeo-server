@@ -14,6 +14,9 @@ import { C_COLORS, I_COLORS, C_LABELS, I_LABELS, SEQ } from '../constants/plotVa
 
 const Plot = createPlotlyComponent(Plotly);
 
+// Move outside to prevent re-rendering
+const SEQ_KEYS = Object.keys(SEQ);
+
 export default function RNALinearPlot(
     { samfeoData, fastDesignData }
 ) {
@@ -21,15 +24,9 @@ export default function RNALinearPlot(
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Default is SAMFEO++ best probability sequence
     const [selectedProgram, setSelectedProgram] = useState('SAMFEO++')
     const [selectedSeq, setSelectedSeq] = useState('prob_seq')
-
-    const SEQ_KEYS = Object.keys(SEQ);
-
-    const PROGRAM_OPTIONS = {
-        'SAMFEO': 'SAMFEO',
-        'SAMFEO++': 'SAMFEO++'
-    };
 
     useEffect(() => {
         if (samfeoData && !fastDesignData) {
@@ -69,7 +66,7 @@ export default function RNALinearPlot(
         if (samfeoData || fastDesignData) {
             fetchAllPlotData();
         }
-    }, [samfeoData, fastDesignData, SEQ_KEYS]);
+    }, [samfeoData, fastDesignData]);
 
     const getCurrentPlot = () => {
         if (!allPlotsData[selectedProgram]) return null;
@@ -92,7 +89,7 @@ export default function RNALinearPlot(
     if (error) {
         return (
             <div className="rna-plot-message rna-plot-message--error">
-                <p>An error occured while loading the plot</p>
+                <p>An error occurred while loading the plot</p>
             </div>
         );
     }
@@ -138,7 +135,7 @@ export default function RNALinearPlot(
                 data={currentPlot.data}
                 layout={currentPlot.layout}
                 config={{
-                    response: true,
+                    responsive: true,
                     modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'lasso2d', 'select2d', 'resetScale2d'],
                     displayLogo: false,
                     toImageButtonOptions: {
