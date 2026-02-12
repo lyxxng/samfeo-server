@@ -2,7 +2,7 @@
  * Component for a dropdown.
 */
 
-import Dropdown from 'react-bootstrap/dropdown';
+import Dropdown from 'react-bootstrap/Dropdown';
 
 export default function DropdownSelect(
     { label, value, onSelect, options, className = '' }
