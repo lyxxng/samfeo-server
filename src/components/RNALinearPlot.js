@@ -149,7 +149,7 @@ export default function RNALinearPlot(
                 style={{ width: '100%', height: '100%' }}
             />
 
-            <div className="rna-plot-legend">
+            <div className="rna-plot-legends">
                 <GradientLegend
                     title="correct base-pair probability"
                     colors={C_COLORS}
