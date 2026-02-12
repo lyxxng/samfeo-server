@@ -6,6 +6,8 @@ import os
 import time
 import threading
 from pathlib import Path
+import random
+from linear_plot import get_linear_plot
 
 app = Flask(__name__)
 CORS(app)
@@ -127,12 +129,14 @@ def samfeo_submission():
         umfe = len(data['umfe'])
 
         if mfe > 0:
-            mfe_sample = data['mfe'][0]
+            mfe_index = random.randrange(mfe)
+            mfe_sample = data['mfe'][mfe_index]
         else:
             mfe_sample = "—"
         
         if umfe > 0:
-            umfe_sample = data['umfe'][0]
+            umfe_index = random.randrange(umfe)
+            umfe_sample = data['umfe'][umfe_index]
         else:
             umfe_sample = "—"
 
@@ -228,12 +232,14 @@ def fastdesign_submission():
         umfe = len(data['umfe_list'])
 
         if mfe > 0:
-            mfe_sample = data['mfe_list'][0]
+            mfe_index = random.randrange(mfe)
+            mfe_sample = data['mfe_list'][mfe_index]
         else:
             mfe_sample = "—"
         
         if umfe > 0:
-            umfe_sample = data['umfe_list'][0]
+            umfe_index = random.randrange(umfe)
+            umfe_sample = data['umfe_list'][umfe_index]
         else:
             umfe_sample = "—"
 
@@ -270,3 +276,26 @@ def download_file(filename):
         as_attachment=True,
         mimetype="application/json"
     )
+
+@app.route('/api/rna_plot', methods=['POST'])
+def generate_rna_plot():
+    body = request.get_json(silent=True)
+
+    if not body:
+        return jsonify({
+            "error": "Invalid JSON"
+        }), 400
+
+    structure = body["structure"]
+    sequence = body["sequence"]
+
+    if None in [structure, sequence]:
+        return jsonify({
+            "error": "Missing required fields"
+        }), 400
+    
+    plotly_json = get_linear_plot(structure, sequence)
+
+    return jsonify({
+        'plotly_data': plotly_json
+    })
