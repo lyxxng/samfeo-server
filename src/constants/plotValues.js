@@ -35,7 +35,7 @@ export const C_LABELS = ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"];
 export const I_LABELS = ["0.01", "0.2", "0.4", "0.6", "0.8", "1.0"];
 
 // Sequence options
-const SEQ = {
+export const SEQ = {
     'prob_seq': 'Best Probability',
     'ned_seq': 'Best NED',
     'dist_seq': 'Best Distance',
