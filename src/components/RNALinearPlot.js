@@ -5,7 +5,7 @@
 
 // TODO: Maybe get rid of MFE and uMFE option? [x]
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import GradientLegend from './GradientLegend';
@@ -24,9 +24,12 @@ export default function RNALinearPlot(
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Default is SAMFEO++ best probability sequence
-    const [selectedProgram, setSelectedProgram] = useState('SAMFEO++')
+    // Default is SAMFEO best probability sequence
+    const [selectedProgram, setSelectedProgram] = useState('SAMFEO')
     const [selectedSeq, setSelectedSeq] = useState('prob_seq')
+    
+    // Track if we've already fetched to prevent duplicate calls
+    const hasFetchedRef = useRef(false);
 
     useEffect(() => {
         if (samfeoData && !fastDesignData) {
@@ -37,19 +40,32 @@ export default function RNALinearPlot(
     }, [samfeoData, fastDesignData]);
 
     useEffect(() => {
+        // If already fetched, don't fetch again
+        if (hasFetchedRef.current) {
+            return;
+        }
+
+        // Only fetch if we have data
+        if (!samfeoData && !fastDesignData) {
+            return;
+        }
+
         const fetchAllPlotData = async () => {
             try {
                 setLoading(true);
+                hasFetchedRef.current = true; // Mark as fetched before starting
 
                 const plots = {};
 
                 // Fetch SAMFEO plots
                 if (samfeoData) {
+                    console.log('Fetching SAMFEO plots...');
                     plots['SAMFEO'] = await fetchAllRNAPlots(samfeoData, SEQ_KEYS);
                 }
 
                 // Fetch SAMFEO++ plots
                 if (fastDesignData) {
+                    console.log('Fetching SAMFEO++ plots...');
                     plots['SAMFEO++'] = await fetchAllRNAPlots(fastDesignData, SEQ_KEYS);
                 }
 
@@ -58,14 +74,13 @@ export default function RNALinearPlot(
             } catch (err) {
                 console.error('Error fetching RNA plots:', err);
                 setError(err.message);
+                hasFetchedRef.current = false; // Reset on error so it can retry
             } finally {
                 setLoading(false);
             }
         };
 
-        if (samfeoData || fastDesignData) {
-            fetchAllPlotData();
-        }
+        fetchAllPlotData();
     }, [samfeoData, fastDesignData]);
 
     const getCurrentPlot = () => {
@@ -112,8 +127,8 @@ export default function RNALinearPlot(
                             value={selectedProgram}
                             onChange={(e) => setSelectedProgram(e.target.value)}
                         >
-                            <option value="SAMFEO++">SAMFEO++</option>
                             <option value="SAMFEO">SAMFEO</option>
+                            <option value="SAMFEO++">SAMFEO++</option>
                         </select>
                     </div>
                 )}
