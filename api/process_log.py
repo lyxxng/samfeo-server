@@ -76,7 +76,12 @@ def filter_fd_log_line(line):
 
 # Process the subprocess output for the log file
 def process_output(process, log_file, program_type):
-    y_sub_message_shown = False # y_sub messages in SAMFEO++
+    # Messages for SAMFEO++
+    y_sub_message_shown = False
+    ned_shown = False
+    prob_shown = False
+    dist_shown = False
+
     completed_job = False
     
     # Process stdout line by line until end
@@ -84,12 +89,27 @@ def process_output(process, log_file, program_type):
         if not line:
             break
         
-        # For FastDesign, show a message when verbose y_sub section starts
-        if program_type == 'fd' and not y_sub_message_shown and 'y_sub:' in line:
-            log_file.write('\nEvaluating combined sequence designs (this may take a moment)...\n\n')
-            log_file.flush()
+        # Extra filtering for SAMFEO++
+        if program_type == 'fd':
+            # Show special message when verbose section begins
+            if not y_sub_message_shown and 'y_sub:' in line:
+                log_file.write('\nEvaluating combined sequence designs (this may take a moment)...\n\n')
+                log_file.flush()
 
-            y_sub_message_shown = True
+                y_sub_message_shown = True
+
+            # Skip first occurences to avoid the duplicate
+            if not ned_shown and 'ned_best:' in line:
+                ned_shown = True
+                continue
+
+            if not prob_shown and 'prob_best:' in line:
+                prob_shown = True
+                continue
+
+            if not dist_shown and 'dist_best:' in line:
+                dist_shown = True
+                continue
         
         # Job complete message
         if not completed_job and 'results_' in line:
