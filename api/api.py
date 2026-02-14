@@ -21,9 +21,13 @@ sys.path.insert(0, str(PARENT))
 from linear_plot import get_linear_plot
 from process_log import process_output
 
-# /app/api/../../tmp/[results/logs]
+# /app/api/../../tmp/[results/logs] (production)
 RESULTS_DIR = (PARENT / ".." / ".." / "tmp" / "results")
 LOGS_DIR = (PARENT / ".." / ".." / "tmp" / "logs")
+
+# For local development uncomment:
+# RESULTS_DIR = (PARENT / "tmp" / "results")
+# LOGS_DIR = (PARENT / "tmp" / "logs")
 
 # /app/api/../programs/
 SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve()
