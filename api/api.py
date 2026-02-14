@@ -21,7 +21,7 @@ sys.path.insert(0, str(PARENT))
 from linear_plot import get_linear_plot
 from process_log import process_output
 
-# /app/api/../../tmp/[results/logss]
+# /app/api/../../tmp/[results/logs]
 RESULTS_DIR = (PARENT / ".." / ".." / "tmp" / "results")
 LOGS_DIR = (PARENT / ".." / ".." / "tmp" / "logs")
 
@@ -39,7 +39,7 @@ def cleanup():
 
         # Check every file in the results directory
         for f in os.listdir(RESULTS_DIR):
-            path = os.path.join(RESULTS_DIR, f)
+            path = os.path.join(str(RESULTS_DIR), f)
             try:
                 if os.path.isfile(path):
                     elapsed = curr_time - os.path.getmtime(path)
@@ -52,7 +52,7 @@ def cleanup():
 
         # Check every file in the logs directory
         for f in os.listdir(LOGS_DIR):
-            path = os.path.join(LOGS_DIR, f)
+            path = os.path.join(str(LOGS_DIR), f)
             try:
                 if os.path.isfile(path):
                     elapsed = curr_time - os.path.getmtime(path)
@@ -99,15 +99,15 @@ def samfeo_submission():
 
     # Generate unique ID for log & status files
     log_id = str(uuid.uuid4())
-    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
-    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
+    log_path = os.path.join(str(LOGS_DIR), f"log_{log_id}.txt")
+    status_path = os.path.join(str(LOGS_DIR), f"status_{log_id}.json")
 
     def run_samfeo_background():
         try:
             # Run SAMFEO
             with open(log_path, 'w') as log_file:
                 process = subprocess.Popen(
-                    ["python3", "-u", SAMFEO_PATH + "main.py"] + args,
+                    ["python3", "-u", str(SAMFEO_PATH / "main.py")] + args,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -151,7 +151,7 @@ def samfeo_submission():
                 return
             
             json_file = json_match.group(1)
-            json_path = os.path.join(RESULTS_DIR, json_file)
+            json_path = os.path.join(str(RESULTS_DIR), json_file)
 
             # Save info from the json file
             with open(json_path) as f:
@@ -239,21 +239,21 @@ def fastdesign_submission():
 
     # Append correct path to motifs
     if motif_path == "easy":
-        args.append(FD_PATH + "data/easy_motifs.txt")
+        args.append(str(FD_PATH / "data/easy_motifs.txt"))
     elif motif_path == "helix":
-        args.append(FD_PATH + "data/helix_motifs.txt")
+        args.append(str(FD_PATH / "data/helix_motifs.txt"))
     
     # Generate unique ID
     log_id = str(uuid.uuid4())
-    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
-    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
+    log_path = os.path.join(str(LOGS_DIR), f"log_{log_id}.txt")
+    status_path = os.path.join(str(LOGS_DIR), f"status_{log_id}.json")
 
     def run_fastdesign_background():
         try:
             # Run FastDesign
             with open(log_path, 'w') as log_file:
                 process = subprocess.Popen(
-                    ["python3", "-u", FD_PATH + "main.py"] + args,
+                    ["python3", "-u", str(FD_PATH / "main.py")] + args,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -297,7 +297,7 @@ def fastdesign_submission():
                 return
             
             json_file = json_match.group(1)
-            json_path = os.path.join(RESULTS_DIR, json_file)
+            json_path = os.path.join(str(RESULTS_DIR), json_file)
 
             # Save info from the json file
             with open(json_path) as f:
@@ -377,7 +377,7 @@ def get_log(log_id):
             "error": "Invalid log ID"
         }), 400
     
-    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
+    log_path = os.path.join(str(LOGS_DIR), f"log_{log_id}.txt")
 
     if not os.path.exists(log_path):
         return jsonify({"lines": [], "next": 0})
@@ -405,7 +405,7 @@ def get_status(log_id):
             "error": "Invalid log ID"
         }), 400
     
-    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
+    status_path = os.path.join(str(LOGS_DIR), f"status_{log_id}.json")
 
     if not os.path.exists(status_path):
         return jsonify({"status": "processing"})
@@ -416,7 +416,7 @@ def get_status(log_id):
 # Download files
 @app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):
-    file_path = os.path.join(RESULTS_DIR, filename)
+    file_path = os.path.join(str(RESULTS_DIR), filename)
 
     if not os.path.exists(file_path):
         abort(404)
