@@ -1,13 +1,15 @@
 from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 import json
-import subprocess
 import os
-import sys
-import time
-import threading
 from pathlib import Path
 import random
+import re
+import subprocess
+import sys
+import threading
+import time
+import uuid
 
 app = Flask(__name__)
 CORS(app)
@@ -17,37 +19,58 @@ PARENT = Path(__file__).parent
 sys.path.insert(0, str(PARENT))
 
 from linear_plot import get_linear_plot
+from process_log import process_output
 
-# /app/api/../../tmp/samfeo_tmp
-TEMP_DIR = (PARENT / ".." / ".." / "tmp" / "samfeo_tmp")
+# /app/api/../../tmp/[results/logss]
+RESULTS_DIR = (PARENT / ".." / ".." / "tmp" / "results")
+LOGS_DIR = (PARENT / ".." / ".." / "tmp" / "logs")
 
 # /app/api/../programs/
 SAMFEO_PATH = (PARENT / ".." / "programs" / "SAMFEO").resolve()
 FD_PATH = (PARENT / ".." / "programs" / "FastDesign").resolve()
 
-CLEAN_FREQUENCY = 3600  # Every hour
+R_CLEAN_FREQUENCY = 3600  # Every hour for results
+L_CLEAN_FREQUENCY = 7200  # Every 2 hours for logs
 
-
+# Remove old files
 def cleanup():
     while True:
         curr_time = time.time()
 
-        # Check every file in the temp directory
-        for f in os.listdir(TEMP_DIR):
-            path = os.path.join(str(TEMP_DIR), f)
-            if os.path.isfile(path):
-                elapsed = curr_time - os.path.getmtime(path)
-                if elapsed > CLEAN_FREQUENCY:
-                    os.remove(path)
-                    print("Removed file " + path)
+        # Check every file in the results directory
+        for f in os.listdir(RESULTS_DIR):
+            path = os.path.join(RESULTS_DIR, f)
+            try:
+                if os.path.isfile(path):
+                    elapsed = curr_time - os.path.getmtime(path)
+                    if elapsed > R_CLEAN_FREQUENCY:
+                        os.remove(path)
+                        print("Removed results file " + path)
+            # Already removed by another worker
+            except (FileNotFoundError, PermissionError):
+                pass
+
+        # Check every file in the logs directory
+        for f in os.listdir(LOGS_DIR):
+            path = os.path.join(LOGS_DIR, f)
+            try:
+                if os.path.isfile(path):
+                    elapsed = curr_time - os.path.getmtime(path)
+                    if elapsed > L_CLEAN_FREQUENCY:
+                        os.remove(path)
+                        print("Removed log/status file " + path)
+            # Already removed by another worker
+            except (FileNotFoundError, PermissionError):
+                pass
 
         # Check every 5 minutes            
         time.sleep(300)
 
 
 with app.app_context():
-    # Create temp directory if it doesn't already exist
-    os.makedirs(TEMP_DIR, exist_ok=True)
+    # Create temp directories if they don't already exist
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    os.makedirs(LOGS_DIR, exist_ok=True)
 
     # Start the cleanup thread
     thread = threading.Thread(target=cleanup, daemon=True)
@@ -71,95 +94,133 @@ def samfeo_submission():
     step = body["step"]
     obj = body["object"]
 
-    if None in [structure, temperature, queue, step, obj]:
-        return jsonify({
-            "error": "Missing required fields"
-        }), 400
-
     # Create list of arguments
     args = ["--online", "--t", temperature, "--k", queue, "--object", obj, "--step", step]
 
-    try:
-        # Run SAMFEO
-        result = subprocess.run(
-            ["python3", str(SAMFEO_PATH / "main.py")] + args,
-            input=structure,
-            text=True,
-            capture_output=True,
-            cwd=TEMP_DIR,
-            timeout=840) # 14 minute timeout
-    except subprocess.TimeoutExpired:
-        return jsonify({
-            "error": "Algorithm exceeded maximum time limit (10 minutes)"
-        }), 408
-    except Exception as e:
-        return jsonify({
-            "error": f"Error running algorithm: {str(e)}"
-        }), 500
-        
-    s = result.stdout
-    e = result.stderr
+    # Generate unique ID for log & status files
+    log_id = str(uuid.uuid4())
+    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
+    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
 
-    # If contents in stderr return code 400
-    if e:
-        return jsonify({
-            "error": e
-        }), 400
+    def run_samfeo_background():
+        try:
+            # Run SAMFEO
+            with open(log_path, 'w') as log_file:
+                process = subprocess.Popen(
+                    ["python3", "-u", SAMFEO_PATH + "main.py"] + args,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=RESULTS_DIR,
+                    bufsize=1
+                )
 
-    # Get the json file name
-    stdout_len = len(s)
-    json_file = s[s.find("results_"):stdout_len - 1]
+                # Write input and close stdin
+                process.stdin.write(structure)
+                process.stdin.close()
 
-    temp_path = os.path.join(str(TEMP_DIR), json_file)
+                # Process with filtering
+                process_output(process, log_file, 'samfeo')
 
-    # Save info from the json file
-    with open(temp_path) as f:
-        data = json.load(f)
+                # Wait for process to complete
+                process.wait()
+                result_stderr = process.stderr.read()
 
-        prob_best = data['prob_best']
-        prob_val = prob_best[0]
-        prob_seq = prob_best[1]
+            # Check for error
+            if result_stderr:
+                with open(status_path, 'w') as f:
+                    json.dump({
+                        "status": "error",
+                        "error": result_stderr
+                    }, f)
+                return
 
-        ned_best = data['ned_best']
-        ned_val = ned_best[0]
-        ned_seq = ned_best[1]
+            # Read from log file to extract JSON file name
+            with open(log_path, 'r') as log_file:
+                stdout = log_file.read()
 
-        dist_best = data['dist_best']
-        dist_val = dist_best[0]
-        dist_seq = dist_best[1]
-
-        mfe = len(data['mfe'])
-        umfe = len(data['umfe'])
-
-        if mfe > 0:
-            mfe_index = random.randrange(mfe)
-            mfe_sample = data['mfe'][mfe_index]
-        else:
-            mfe_sample = "—"
-        
-        if umfe > 0:
-            umfe_index = random.randrange(umfe)
-            umfe_sample = data['umfe'][umfe_index]
-        else:
-            umfe_sample = "—"
-
-        total_time = data['time']
+            # Extract JSON filename using regex
+            json_match = re.search(r'(results_[^\s]+\.json)', stdout)
+            if not json_match:
+                with open(status_path, 'w') as f:
+                    json.dump({
+                        "status": "error",
+                        "error": "Could not find results file in output"
+                    }, f)
+                return
             
-    # Return all data and time elapsed for SAMFEO
+            json_file = json_match.group(1)
+            json_path = os.path.join(RESULTS_DIR, json_file)
+
+            # Save info from the json file
+            with open(json_path) as f:
+                data = json.load(f)
+
+                prob_best = data['prob_best']
+                prob_val = prob_best[0]
+                prob_seq = prob_best[1]
+
+                ned_best = data['ned_best']
+                ned_val = ned_best[0]
+                ned_seq = ned_best[1]
+
+                dist_best = data['dist_best']
+                dist_val = dist_best[0]
+                dist_seq = dist_best[1]
+
+                mfe = len(data['mfe'])
+                umfe = len(data['umfe'])
+
+                if mfe > 0:
+                    mfe_index = random.randrange(mfe)
+                    mfe_sample = data['mfe'][mfe_index]
+                else:
+                    mfe_sample = "—"
+                
+                if umfe > 0:
+                    umfe_index = random.randrange(umfe)
+                    umfe_sample = data['umfe'][umfe_index]
+                else:
+                    umfe_sample = "—"
+
+                total_time = data['time']
+                    
+            # Return all data and time elapsed for SAMFEO
+            with open(status_path, 'w') as f:
+                json.dump({
+                    "status": "complete",
+                    "structure": structure,
+                    "prob_val": str(round(prob_val, 4)),
+                    "prob_seq": prob_seq,
+                    "ned_val": str(round(ned_val, 3)),
+                    "ned_seq": ned_seq,
+                    "dist_val": dist_val,
+                    "dist_seq": dist_seq,
+                    "mfe": mfe,
+                    "umfe": umfe,
+                    "mfe_sample": mfe_sample,
+                    "umfe_sample": umfe_sample,
+                    "time": str(round(total_time, 3)),
+                    "results": json_file
+                }, f)
+
+        except Exception as e:
+            print(f"SAMFEO background error: {e}")
+            with open(status_path, 'w') as f:
+                json.dump({
+                    "status": "error",
+                    "error": str(e)
+                }, f)
+    
+    # Start background thread running SAMFEO
+    thread = threading.Thread(target=run_samfeo_background, daemon=True)
+    thread.start()
+
+    # Return immediately with log ID
     return jsonify({
-        "structure": structure,
-        "prob_val": str(round(prob_val, 4)),
-        "prob_seq": prob_seq,
-        "ned_val": str(round(ned_val, 3)),
-        "ned_seq": ned_seq,
-        "dist_val": dist_val,
-        "dist_seq": dist_seq,
-        "mfe": mfe,
-        "umfe": umfe,
-        "mfe_sample": mfe_sample,
-        "umfe_sample": umfe_sample,
-        "time": str(round(total_time, 3)),
-        "results": json_file
+        "log_id": log_id,
+        "status": "processing"
     })
 
 # SAMFEO++ / FastDesign API call
@@ -178,108 +239,196 @@ def fastdesign_submission():
 
     # Append correct path to motifs
     if motif_path == "easy":
-        args.append(str(FD_PATH / "data/easy_motifs.txt"))
+        args.append(FD_PATH + "data/easy_motifs.txt")
     elif motif_path == "helix":
-        args.append(str(FD_PATH / "data/helix_motifs.txt"))
+        args.append(FD_PATH + "data/helix_motifs.txt")
     
-    try:
-        # Run SAMFEO++
-        result = subprocess.run(
-            ["python3", str(FD_PATH / "main.py")] + args,
-            input=structure,
-            text=True,
-            capture_output=True,
-            cwd=TEMP_DIR,
-            timeout=840) # 14 minute time out
-    except subprocess.TimeoutExpired:
-        return jsonify({
-            "error": "Algorithm exceeded maximum time limit (10 minutes)"
-        }), 408
-    except Exception as e:
-        return jsonify({
-            "error": f"Error running algorithm: {str(e)}"
-        }), 500
+    # Generate unique ID
+    log_id = str(uuid.uuid4())
+    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
+    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
+
+    def run_fastdesign_background():
+        try:
+            # Run FastDesign
+            with open(log_path, 'w') as log_file:
+                process = subprocess.Popen(
+                    ["python3", "-u", FD_PATH + "main.py"] + args,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=RESULTS_DIR,
+                    bufsize=1
+                )
+
+                # Write input and close stdin
+                process.stdin.write(structure)
+                process.stdin.close()
+
+                # Process with filtering
+                process_output(process, log_file, 'fd')
+
+                # Wait for process to complete
+                process.wait()
+                result_stderr = process.stderr.read()
+
+            # Check for error
+            if result_stderr:
+                with open(status_path, 'w') as f:
+                    json.dump({
+                        "status": "error",
+                        "error": result_stderr
+                    }, f)
+                return
+
+            # Read from log file to extract JSON file name
+            with open(log_path, 'r') as log_file:
+                stdout = log_file.read()
+
+            # Extract JSON filename using regex
+            json_match = re.search(r'(results_[^\s]+\.json)', stdout)
+            if not json_match:
+                with open(status_path, 'w') as f:
+                    json.dump({
+                        "status": "error",
+                        "error": "Could not find results file in output"
+                    }, f)
+                return
+            
+            json_file = json_match.group(1)
+            json_path = os.path.join(RESULTS_DIR, json_file)
+
+            # Save info from the json file
+            with open(json_path) as f:
+                data = json.load(f)
+
+                prob_best = data['prob_best']
+                prob_val = prob_best[0]
+                prob_seq = prob_best[1]
+
+                ned_best = data['ned_best']
+                ned_val = ned_best[0]
+                ned_seq = ned_best[1]
+
+                dist_best = data['dist_best']
+                dist_val = dist_best[0]
+                dist_seq = dist_best[1]
+
+                mfe = len(data['mfe_list'])
+                umfe = len(data['umfe_list'])
+
+                if mfe > 0:
+                    mfe_index = random.randrange(mfe)
+                    mfe_sample = data['mfe_list'][mfe_index]
+                else:
+                    mfe_sample = "—"
+                
+                if umfe > 0:
+                    umfe_index = random.randrange(umfe)
+                    umfe_sample = data['umfe_list'][umfe_index]
+                else:
+                    umfe_sample = "—"
+
+                total_time = data['time']
+                
+            # Return all data and time elapsed for SAMFEO++
+            with open(status_path, 'w') as f:
+                json.dump({
+                    "status": "complete",
+                    "structure": structure,
+                    "prob_val": str(round(prob_val, 4)),
+                    "prob_seq": prob_seq,
+                    "ned_val": str(round(ned_val, 3)),
+                    "ned_seq": ned_seq,
+                    "dist_val": dist_val,
+                    "dist_seq": dist_seq,
+                    "mfe": mfe,
+                    "umfe": umfe,
+                    "mfe_sample": mfe_sample,
+                    "umfe_sample": umfe_sample,
+                    "time": str(round(total_time, 3)),
+                    "results": json_file
+                }, f)
+
+        except Exception as e:
+            print(f"FastDesign background error: {e}")
+            with open(status_path, 'w') as f:
+                json.dump({
+                    "status": "error",
+                    "error": str(e)
+                }, f)
     
-    s = result.stdout
-    e = result.stderr
+    # Start background thread running FastDesign
+    thread = threading.Thread(target=run_fastdesign_background, daemon=True)
+    thread.start()
 
-    # If contents in stderr return code 400
-    if e:
-        return jsonify({
-            "error": e
-        }), 400
-    
-    # Get the json file name
-    stdout_len = len(s)
-    json_file = s[s.find("results_"):stdout_len - 1]
-
-    temp_path = os.path.join(str(TEMP_DIR), json_file)
-
-    # Save info from the json file
-    with open(temp_path) as f:
-        data = json.load(f)
-
-        prob_best = data['prob_best']
-        prob_val = prob_best[0]
-        prob_seq = prob_best[1]
-
-        ned_best = data['ned_best']
-        ned_val = ned_best[0]
-        ned_seq = ned_best[1]
-
-        dist_best = data['dist_best']
-        dist_val = dist_best[0]
-        dist_seq = dist_best[1]
-
-        mfe = len(data['mfe_list'])
-        umfe = len(data['umfe_list'])
-
-        if mfe > 0:
-            mfe_index = random.randrange(mfe)
-            mfe_sample = data['mfe_list'][mfe_index]
-        else:
-            mfe_sample = "—"
-        
-        if umfe > 0:
-            umfe_index = random.randrange(umfe)
-            umfe_sample = data['umfe_list'][umfe_index]
-        else:
-            umfe_sample = "—"
-
-        total_time = data['time']
-        
-    # Return all data and time elapsed for SAMFEO++
+    # Return immediately with log ID
     return jsonify({
-        "structure": structure,
-        "prob_val": str(round(prob_val, 4)),
-        "prob_seq": prob_seq,
-        "ned_val": str(round(ned_val, 3)),
-        "ned_seq": ned_seq,
-        "dist_val": dist_val,
-        "dist_seq": dist_seq,
-        "mfe": mfe,
-        "umfe": umfe,
-        "mfe_sample": mfe_sample,
-        "umfe_sample": umfe_sample,
-        "time": str(round(total_time, 3)),
-        "results": json_file
+        "log_id": log_id,
+        "status": "processing"
     })
 
+# Get filtered log starting from query param
+@app.route('/api/logs/<log_id>', methods=['GET'])
+def get_log(log_id):
+    if not re.match(r'^[a-f0-9\-]+$', log_id):
+        return jsonify({
+            "error": "Invalid log ID"
+        }), 400
+    
+    log_path = os.path.join(LOGS_DIR, f"log_{log_id}.txt")
+
+    if not os.path.exists(log_path):
+        return jsonify({"lines": [], "next": 0})
+    
+    # Get starting line from query param
+    from_line = request.args.get('from', default=0, type=int)
+    
+    with open(log_path, 'r') as f:
+        all_lines = f.readlines()
+    
+    # Grab new lines, do not send json file line
+    new_lines = all_lines[from_line:]
+    new_lines = [line.rstrip('\n') for line in new_lines if not ('results_' in line)]
+
+    return jsonify({
+        "lines": new_lines,
+        "next": len(all_lines)
+    })
+
+# Get status of background process
+@app.route('/api/status/<log_id>', methods=['GET'])
+def get_status(log_id):
+    if not re.match(r'^[a-f0-9\-]+$', log_id):
+        return jsonify({
+            "error": "Invalid log ID"
+        }), 400
+    
+    status_path = os.path.join(LOGS_DIR, f"status_{log_id}.json")
+
+    if not os.path.exists(status_path):
+        return jsonify({"status": "processing"})
+    
+    with open(status_path, 'r') as f:
+        return jsonify(json.load(f))
+
 # Download files
-@app.route('/api/download/<filename>')
+@app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):
-    file_path = os.path.join(str(TEMP_DIR), filename)
+    file_path = os.path.join(RESULTS_DIR, filename)
 
     if not os.path.exists(file_path):
         abort(404)
 
     return send_from_directory(
-        TEMP_DIR,
+        RESULTS_DIR,
         filename,
         as_attachment=True,
         mimetype="application/json"
     )
 
+# Get the base pairing probability plot
 @app.route('/api/rna_plot', methods=['POST'])
 def generate_rna_plot():
     body = request.get_json(silent=True)
@@ -289,6 +438,7 @@ def generate_rna_plot():
             "error": "Invalid JSON"
         }), 400
 
+    # Extract dot-bracket structure and nucleotide sequence
     structure = body["structure"]
     sequence = body["sequence"]
 
@@ -297,6 +447,7 @@ def generate_rna_plot():
             "error": "Missing required fields"
         }), 400
     
+    # Get the plotly data
     plotly_json = get_linear_plot(structure, sequence)
 
     return jsonify({
