@@ -1,6 +1,7 @@
 /* TODO
-   - Allow user to input text file
+   - Allow user to input text file (stretch goal)
    - Select sample structures from dropdown
+   - [x] Log showing stdout
 */
 
 import { useEffect, useRef, useState } from 'react';
@@ -16,6 +17,7 @@ import Citation from '../components/Citation';
 import SAMFEOForm from '../components/SAMFEOForm';
 import FastDesignForm from '../components/FastDesignForm';
 import Divider from '../components/Divider';
+import LogViewer from '../components/LogViewer';
 import { DEFAULT_VALUES } from '../constants/formDefaults';
 import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
 import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
@@ -25,6 +27,10 @@ export default function InputPage() {
     const [loading, setLoading] = useState(false);
     const [SAMFEOEnabled, setSAMFEOEnabled] = useState(DEFAULT_VALUES.samfeoEnabled);
     const [fastDesignEnabled, setFastDesignEnabled] = useState(DEFAULT_VALUES.fastDesignEnabled);
+    const [showLogs, setShowLogs] = useState(false);
+    const [logIds, setLogIds] = useState({ samfeo: null, fastdesign: null });
+    const [results, setResults] = useState({ samfeo: null, fastdesign: null });
+    const [completedJobs, setCompletedJobs] = useState({ samfeo: false, fastdesign: false });
 
     const navigate = useNavigate();
 
@@ -42,6 +48,24 @@ export default function InputPage() {
         window.scrollTo(0, 0);
     }, []);
 
+    // Navigate to results when all jobs complete
+    useEffect(() => {
+        const samfeoShouldRun = SAMFEOEnabled;
+        const fastdesignShouldRun = fastDesignEnabled;
+        
+        const samfeoComplete = !samfeoShouldRun || completedJobs.samfeo;
+        const fastdesignComplete = !fastdesignShouldRun || completedJobs.fastdesign;
+        
+        if (loading && samfeoComplete && fastdesignComplete) {
+            navigate("/results", {
+                state: {
+                    s: results.samfeo,
+                    f: results.fastdesign
+                }
+            });
+        }
+    }, [completedJobs, loading, navigate, results, SAMFEOEnabled, fastDesignEnabled]);
+
     const reset = () => {
         // Reset all text fields to defaults
         structureField.current.value = DEFAULT_VALUES.structure;
@@ -58,100 +82,129 @@ export default function InputPage() {
 
         // Clear any errors
         setFormErrors({});
+
+        // Stop loading and remove logs
+        setLoading(false);
+        setShowLogs(false);
+
+        setLogIds({ samfeo: null, fastdesign: null });
+        setResults({ samfeo: null, fastdesign: null });
+        setCompletedJobs({ samfeo: false, fastdesign: false });
     };
 
     const onSubmit = async (ev) => {
-        ev.preventDefault();
+    ev.preventDefault();
 
-        // Text inputs
-        const structure = structureField.current.value;
-        const temperature = temperatureField.current.value;
-        const queue = queueField.current.value;
-        const step = stepField.current.value;
-        const motifstep = motifstepField.current.value;
-        const poststep = poststepField.current.value;
-        const prune = pruneField.current.value;
+    // Text inputs
+    const structure = structureField.current.value;
+    const temperature = temperatureField.current.value;
+    const queue = queueField.current.value;
+    const step = stepField.current.value;
+    const motifstep = motifstepField.current.value;
+    const poststep = poststepField.current.value;
+    const prune = pruneField.current.value;
 
-        // Radio button and checkboxes
-        const form = ev.target;
-        const object = form.object.value;
-        const path = form.path.value;
-        const samfeo = form.samfeo.checked;
-        const fastdesign = form.fastdesign.checked;
+    // Radio button and checkboxes
+    const form = ev.target;
+    const object = form.object.value;
+    const path = form.path.value;
+    const samfeo = form.samfeo.checked;
+    const fastdesign = form.fastdesign.checked;
 
-        const errors = {};
+    const errors = {};
 
-        // User must select at least one program to submit
-        if (!samfeo && !fastdesign) {
-            errors.submit = 'Select at least one program to run.';
-        }
+    // User must select at least one program to submit
+    if (!samfeo && !fastdesign) {
+        errors.submit = 'Select at least one program to run.';
+    }
 
-        // Text input validation
-        if (!structure) {
-            errors.structure = 'Specify a dot-bracket structure.';
-        }
+    // Text input validation
+    if (!structure) {
+        errors.structure = 'Specify a dot-bracket structure.';
+    }
 
-        // Validation for SAMFEO arguments
-        if (samfeo) {
-            Object.assign(errors, validateSAMFEOInputs(temperature, queue, step));
-        }
-        
-        // Validation for SAMFEO++ arguments
-        if (fastdesign) {
-            Object.assign(errors, validateFastDesignInputs(motifstep, poststep, prune));
-        }
+    // Validation for SAMFEO arguments
+    if (samfeo) {
+        Object.assign(errors, validateSAMFEOInputs(temperature, queue, step));
+    }
+    
+    // Validation for SAMFEO++ arguments
+    if (fastdesign) {
+        Object.assign(errors, validateFastDesignInputs(motifstep, poststep, prune));
+    }
 
-        // Display any errors and stop submission
-        setFormErrors(errors);
-        if (Object.keys(errors).length > 0) {
-            return;
-        }
+    // Display any errors and stop submission
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+        return;
+    }
 
-        // If no errors, display loading symbol
-        setLoading(true);
+    // If no errors, reset state and start loading
+    setLoading(true);
+    setShowLogs(false); // Don't show logs until we have log_ids
+    setLogIds({ samfeo: null, fastdesign: null });
+    setResults({ samfeo: null, fastdesign: null });
+    setCompletedJobs({ samfeo: false, fastdesign: false });
 
-        let SAMFEOResult = null;
-        let fastDesignResult = null;
-        const requests = [];
-
+    try {
         // SAMFEO request
         if (samfeo) {
-            const SAMFEOPromise = submitSAMFEO(structure, temperature, queue, step, object)
-                .then(data => { SAMFEOResult = data; });
-            requests.push(SAMFEOPromise);
+            submitSAMFEO(structure, temperature, queue, step, object)
+                .then(data => {
+                    console.log("SAMFEO submitted, log_id:", data.log_id);
+                    setLogIds(prev => ({ ...prev, samfeo: data.log_id }));
+                    setShowLogs(true); // Show logs once we have at least one log_id
+                })
+                .catch(err => {
+                    console.error("SAMFEO submission error:", err);
+                    setFormErrors(prevErrors => ({
+                        ...prevErrors,
+                        ...handleAPIError(err)
+                    }));
+                    setLoading(false);
+                    setCompletedJobs(prev => ({ ...prev, samfeo: true })); // Mark as complete on error
+                });
+        } else {
+            // Mark as complete if not running
+            setCompletedJobs(prev => ({ ...prev, samfeo: true }));
         }
 
-        // SAMFEO++ request
+        // FastDesign request
         if (fastdesign) {
-            const fastDesignPromise = submitFastDesign(structure, motifstep, poststep, prune, path)
-                .then(data => { fastDesignResult = data; });
-            requests.push(fastDesignPromise);
+            submitFastDesign(structure, motifstep, poststep, prune, path)
+                .then(data => {
+                    console.log("FastDesign submitted, log_id:", data.log_id);
+                    setLogIds(prev => ({ ...prev, fastdesign: data.log_id }));
+                    setShowLogs(true); // Show logs once we have at least one log_id
+                })
+                .catch(err => {
+                    console.error("FastDesign submission error:", err);
+                    setFormErrors(prevErrors => ({
+                        ...prevErrors,
+                        ...handleAPIError(err)
+                    }));
+                    setLoading(false);
+                    setCompletedJobs(prev => ({ ...prev, fastdesign: true })); // Mark as complete on error
+                });
+        } else {
+            // Mark as complete if not running
+            setCompletedJobs(prev => ({ ...prev, fastdesign: true }));
         }
-
-        // Get data from all requests
-        try {
-            await Promise.all(requests);
-
-            navigate("/results", {
-                state: {
-                    s: SAMFEOResult,
-                    f: fastDesignResult
-                }
-            });
-        } catch (err) {
-            console.error("Error:", err);
-            setFormErrors(prevErrors => ({
-                ...prevErrors,
-                ...handleAPIError(err)
-            }));
-            setLoading(false);
-        }
-    };
+    } catch (err) {
+        console.error("Error:", err);
+        setFormErrors(prevErrors => ({
+            ...prevErrors,
+            ...handleAPIError(err)
+        }));
+        setLoading(false);
+    }
+};
 
     return (
         <Body>
             <div className='input-card'>
                 <h3>Add a dot-bracket structure</h3>
+
                 <Form onSubmit={onSubmit}>
                     <InputField
                         name="structure"
@@ -203,6 +256,46 @@ export default function InputPage() {
                     <Form.Text className="text-danger">{formErrors.submit}</Form.Text>
                 </Form>
             </div>
+
+            {showLogs && (
+                <div className="input-card">
+                    <h3>Job Progress</h3>
+                    {fastDesignEnabled && logIds.fastdesign && (
+                        <LogViewer 
+                            programName="SAMFEO++" 
+                            logId={logIds.fastdesign}
+                            onComplete={(data) => {
+                                console.log("FastDesign complete:", data);
+                                setResults(prev => ({ ...prev, fastdesign: data }));
+                                setCompletedJobs(prev => ({ ...prev, fastdesign: true }));
+                            }}
+                            onError={(error) => {
+                                console.error("FastDesign error:", error);
+                                setFormErrors(prev => ({ ...prev, submit: error }));
+                                setLoading(false);
+                                setCompletedJobs(prev => ({ ...prev, fastdesign: true }));
+                            }}
+                        />
+                    )}
+                    {SAMFEOEnabled && logIds.samfeo && (
+                        <LogViewer 
+                            programName="SAMFEO" 
+                            logId={logIds.samfeo}
+                            onComplete={(data) => {
+                                console.log("SAMFEO complete:", data);
+                                setResults(prev => ({ ...prev, samfeo: data }));
+                                setCompletedJobs(prev => ({ ...prev, samfeo: true }));
+                            }}
+                            onError={(error) => {
+                                console.error("SAMFEO error:", error);
+                                setFormErrors(prev => ({ ...prev, submit: error }));
+                                setLoading(false);
+                                setCompletedJobs(prev => ({ ...prev, samfeo: true }));
+                            }}
+                        />
+                    )}
+                </div>
+            )}
             
             <Citation />
             

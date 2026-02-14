@@ -20,7 +20,7 @@ const handleResponse = async (res) => {
     }
 };
 
-// Design RNA using SAMFEO
+// Submit SAMFEO job and return log_id for polling
 export const submitSAMFEO = async (structure, temperature, queue, step, object) => {
     const requestOptions = {
         method: 'POST',
@@ -35,15 +35,15 @@ export const submitSAMFEO = async (structure, temperature, queue, step, object) 
     };
 
     const res = await fetch(`${API_URL}/samfeo_submit`, requestOptions);
-    return handleResponse(res);
-};
+    return await handleResponse(res);
+}
 
-// Design RNA using SAMFEO++
+// Submit SAMFEO++ job and return log_id for polling
 export const submitFastDesign = async (structure, motifstep, poststep, prune, path) => {
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             structure,
             step: motifstep,
             poststep,
@@ -51,9 +51,20 @@ export const submitFastDesign = async (structure, motifstep, poststep, prune, pa
             motif_path: path
         })
     };
-
     const res = await fetch(`${API_URL}/fastdesign_submit`, requestOptions);
-    return handleResponse(res);
+    return await handleResponse(res);
+};
+
+// Poll logs for a specific job
+export const pollLogs = async (logId, fromLine = 0) => {
+    const res = await fetch(`${API_URL}/logs/${logId}?from=${fromLine}`);
+    return await handleResponse(res);
+};
+
+// Poll status for a specific job
+export const pollStatus = async (logId) => {
+    const res = await fetch(`${API_URL}/status/${logId}`);
+    return await handleResponse(res);
 };
 
 // SAMFEO & SAMFEO++ errors
@@ -70,7 +81,7 @@ export const handleAPIError = (err) => {
 };
 
 // Fetch a single RNA plot
-export const fetchRNAPlot = async (structure, sequence) => {
+const fetchRNAPlot = async (structure, sequence) => {
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,20 +90,16 @@ export const fetchRNAPlot = async (structure, sequence) => {
             sequence
         })
     };
-
     const res = await fetch(`${API_URL}/rna_plot`, requestOptions);
     const data = await handleResponse(res);
-
     return JSON.parse(data.plotly_data);
 };
 
 // Fetch all RNA plots for a given program's data
 export const fetchAllRNAPlots = async (programData, sequenceKeys) => {
     const plots = {};
-
     for (const seqKey of sequenceKeys) {
         const sequence = programData[seqKey];
-
         if (sequence) {
             try {
                 plots[seqKey] = await fetchRNAPlot(programData.structure, sequence);
@@ -101,6 +108,5 @@ export const fetchAllRNAPlots = async (programData, sequenceKeys) => {
             }
         }
     }
-
     return plots;
 };

@@ -179,6 +179,67 @@ select {
 }
 
 
+/* Log viewer */
+.log-viewer {
+  background-color: #e5e5e5;
+  border: 1px solid #bbb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin: 1rem 0;
+  font-family: 'Courier New', 'Consolas', monospace;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.log-viewer__header {
+  background-color: #d0d0d0;
+  color: #222;
+  border-bottom: 1px solid #aaa;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.log-viewer__status {
+  font-size: 0.875rem;
+  color: white;
+  font-weight: 600;
+  background-color: #059669;
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.5rem;
+}
+
+.log-viewer__content {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 1rem;
+  color: #222;
+  background-color: #ebebeb;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.log-viewer__line {
+  margin-bottom: 0.2rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-viewer__line--muted {
+  color: #555;
+  font-style: italic;
+}
+
+.log-viewer--error {
+  background-color: #fee;
+  color: #c00;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+
 /* Typography */
 .font-bold {
   font-weight: 700;
