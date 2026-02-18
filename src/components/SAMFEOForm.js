@@ -1,6 +1,7 @@
 import InputField from './InputField';
 import CheckBox from './CheckBox';
 import RadioButton from './RadioButton';
+import { DEFAULT_VALUES } from '../constants/formDefaults'
 
 export default function SAMFEOForm({ 
     enabled, 
@@ -22,21 +23,21 @@ export default function SAMFEOForm({
             <InputField
                 name="temperature" 
                 label={<span><b>Sampling temperature</b> (0.1 - 10)</span>}
-                value={"1"} 
+                value={DEFAULT_VALUES.temperature} 
                 error={formErrors.temperature} 
                 fieldRef={temperatureRef}
                 disabled={!enabled} />
             <InputField
                 name="queue" 
                 label={<span><b>Frontier (priority queue) size</b> (1 - 10)</span>}
-                value={"10"} 
+                value={DEFAULT_VALUES.queue} 
                 error={formErrors.queue} 
                 fieldRef={queueRef}
                 disabled={!enabled} />
             <InputField
                 name="step" 
                 label={<span><b>Number of steps</b> (100 - 10000)</span>}
-                value={"5000"} 
+                value={DEFAULT_VALUES.step} 
                 error={formErrors.step} 
                 fieldRef={stepRef}
                 disabled={!enabled} />
@@ -44,7 +45,7 @@ export default function SAMFEOForm({
             <RadioButton
                 label={<span><b>Optimization objective</b></span>}
                 name={"object"} 
-                defaultValue={"pd"}
+                defaultValue={DEFAULT_VALUES.object}
                 options={[
                     { label: "Probability defect", value: "pd" },
                     { label: "Normalized ensemble defect", value: "ned" }
