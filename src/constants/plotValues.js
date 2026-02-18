@@ -35,10 +35,14 @@ export const C_LABELS = ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"];
 export const I_LABELS = ["0.01", "0.2", "0.4", "0.6", "0.8", "1.0"];
 
 // Sequence options
-export const SEQ = {
-    'prob_seq': 'Best Probability',
-    'ned_seq': 'Best NED',
-    'dist_seq': 'Best Distance',
-    // 'mfe_sample': 'MFE Example',
-    // 'umfe_sample': 'uMFE Example'
-}
+export const SEQ = [
+    { value: 'prob_seq', label: 'Best Probability' },
+    { value: 'ned_seq', label: 'Best NED' },
+    { value: 'dist_seq', label: 'Best Distance' }
+];
+
+// Program options
+export const PROG = [
+    { value: 'SAMFEO', label: 'SAMFEO' },
+    { value: 'SAMFEO++', label: 'SAMFEO++' }
+];

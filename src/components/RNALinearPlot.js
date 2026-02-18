@@ -9,13 +9,14 @@ import { useEffect, useState, useRef } from 'react';
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import GradientLegend from './GradientLegend';
+import Dropdown from './Dropdown';
 import { fetchAllRNAPlots } from '../services/api';
-import { C_COLORS, I_COLORS, C_LABELS, I_LABELS, SEQ } from '../constants/plotValues';
+import { C_COLORS, I_COLORS, C_LABELS, I_LABELS, SEQ, PROG } from '../constants/plotValues';
 
 const Plot = createPlotlyComponent(Plotly);
 
 // Move outside to prevent re-rendering
-const SEQ_KEYS = Object.keys(SEQ);
+const SEQ_KEYS = SEQ.map(s => s.value);
 
 export default function RNALinearPlot(
     { samfeoData, fastDesignData }
@@ -121,29 +122,20 @@ export default function RNALinearPlot(
         <div className="rna-plot-container">
             <div className="rna-plot-controls">
                 {showProgramDropdown && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <label style={{ fontWeight: 'bold', minWidth: '80px' }}>Program:</label>
-                        <select
-                            value={selectedProgram}
-                            onChange={(e) => setSelectedProgram(e.target.value)}
-                        >
-                            <option value="SAMFEO">SAMFEO</option>
-                            <option value="SAMFEO++">SAMFEO++</option>
-                        </select>
-                    </div>
+                    <Dropdown
+                        label="Program:"
+                        value={selectedProgram}
+                        onChange={setSelectedProgram}
+                        options={PROG}
+                    />
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <label style={{ fontWeight: 'bold', minWidth: '80px' }}>Sequence:</label>
-                    <select
-                        value={selectedSeq}
-                        onChange={(e) => setSelectedSeq(e.target.value)}
-                    >
-                        {Object.entries(SEQ).map(([key, label]) => (
-                            <option key={key} value={key}>{label}</option>
-                        ))}
-                    </select>
-                </div>
+                <Dropdown
+                    label="Sequence:"
+                    value={selectedSeq}
+                    onChange={setSelectedSeq}
+                    options={SEQ}
+                />
             </div>
 
             <Plot

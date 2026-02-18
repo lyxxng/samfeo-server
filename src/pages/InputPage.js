@@ -18,11 +18,13 @@ import SAMFEOForm from '../components/SAMFEOForm';
 import FastDesignForm from '../components/FastDesignForm';
 import Divider from '../components/Divider';
 import LogViewer from '../components/LogViewer';
-import { DEFAULT_VALUES } from '../constants/formDefaults';
+import Dropdown from '../components/Dropdown';
+import { DEFAULT_VALUES, SAMPLES } from '../constants/formDefaults';
 import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
 import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
 
 export default function InputPage() {
+    const [selectedSample, setSelectedSample] = useState(DEFAULT_VALUES.structure);
     const [formErrors, setFormErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [SAMFEOEnabled, setSAMFEOEnabled] = useState(DEFAULT_VALUES.samfeoEnabled);
@@ -66,7 +68,16 @@ export default function InputPage() {
         }
     }, [completedJobs, loading, navigate, results, SAMFEOEnabled, fastDesignEnabled]);
 
+    // Change dot-bracket structure according to selected sample
+    const onSampleChange = (value) => {
+        setSelectedSample(value);
+        structureField.current.value = value;
+    };
+
     const reset = () => {
+        // Reset sample selection
+        setSelectedSample(DEFAULT_VALUES.structure);
+
         // Reset all text fields to defaults
         structureField.current.value = DEFAULT_VALUES.structure;
         temperatureField.current.value = DEFAULT_VALUES.temperature;
@@ -214,6 +225,13 @@ export default function InputPage() {
                         value={DEFAULT_VALUES.structure}
                         error={formErrors.structure}
                         fieldRef={structureField} />
+                    
+                    <Dropdown
+                        label="Samples:"
+                        value={selectedSample}
+                        onChange={onSampleChange}
+                        options={SAMPLES}
+                    />
                     
                     <Divider />
 
