@@ -1,6 +1,6 @@
 /* TODO
    - Allow user to input text file (stretch goal)
-   - Select sample structures from dropdown
+   - [x] Select sample structures from dropdown
    - [x] Log showing stdout
 */
 
@@ -227,7 +227,7 @@ export default function InputPage() {
                         fieldRef={structureField} />
                     
                     <Dropdown
-                        label="Samples:"
+                        label="Eterna100 Samples:"
                         value={selectedSample}
                         onChange={onSampleChange}
                         options={SAMPLES}
