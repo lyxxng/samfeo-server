@@ -18,9 +18,9 @@ import SAMFEOForm from '../components/SAMFEOForm';
 import FastDesignForm from '../components/FastDesignForm';
 import Divider from '../components/Divider';
 import LogViewer from '../components/LogViewer';
-import Dropdown from '../components/Dropdown';
-import { DEFAULT_VALUES, SAMPLES } from '../constants/formDefaults';
-import { validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
+import SamplePanel from '../components/SamplePanel';
+import { DEFAULT_VALUES, FAMILY_LABELS, SAMPLES } from '../constants/formDefaults';
+import { validateStructure, validateSAMFEOInputs, validateFastDesignInputs } from '../utils/validation';
 import { submitSAMFEO, submitFastDesign, handleAPIError } from '../services/api';
 
 export default function InputPage() {
@@ -44,10 +44,9 @@ export default function InputPage() {
     const poststepField = useRef();
     const pruneField = useRef();
 
-    // Cursor in structure text area and scroll to top
+    // Cursor in structure text area
     useEffect(() => {
         structureField.current.focus();
-        window.scrollTo(0, 0);
     }, []);
 
     // Navigate to results when all jobs complete
@@ -130,9 +129,8 @@ export default function InputPage() {
     }
 
     // Text input validation
-    if (!structure) {
-        errors.structure = 'Specify a dot-bracket structure.';
-    }
+    const structureError = validateStructure(structure);
+    if (structureError) errors.structure = structureError;
 
     // Validation for SAMFEO arguments
     if (samfeo) {
@@ -226,11 +224,11 @@ export default function InputPage() {
                         error={formErrors.structure}
                         fieldRef={structureField} />
                     
-                    <Dropdown
-                        label="Eterna100 Samples:"
+                    <SamplePanel
+                        samples={SAMPLES}
+                        familyLabels={FAMILY_LABELS}
                         value={selectedSample}
                         onChange={onSampleChange}
-                        options={SAMPLES}
                     />
                     
                     <Divider />
@@ -289,7 +287,7 @@ export default function InputPage() {
                             }}
                             onError={(error) => {
                                 console.error("FastDesign error:", error);
-                                setFormErrors(prev => ({ ...prev, submit: error }));
+                                setFormErrors(prev => ({ ...prev, submit: "An error occurred while running the program." }));
                                 setLoading(false);
                                 setCompletedJobs(prev => ({ ...prev, fastdesign: true }));
                             }}
@@ -306,7 +304,7 @@ export default function InputPage() {
                             }}
                             onError={(error) => {
                                 console.error("SAMFEO error:", error);
-                                setFormErrors(prev => ({ ...prev, submit: error }));
+                                setFormErrors(prev => ({ ...prev, submit: "An error occurred while running the program." }));
                                 setLoading(false);
                                 setCompletedJobs(prev => ({ ...prev, samfeo: true }));
                             }}

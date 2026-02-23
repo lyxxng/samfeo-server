@@ -239,6 +239,175 @@ select {
   margin: 1rem 0;
 }
 
+/* Sample panel */
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sp-label {
+  font-weight: bold;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sp-wrapper {
+  position: relative;
+}
+
+.sp-trigger {
+  width: 310px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  color: #0f172a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sp-trigger:hover {
+  border-color: #93c5fd;
+}
+
+.sp-trigger--open {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+}
+
+.sp-trigger-chevron {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+
+.sp-trigger--open .sp-trigger-chevron {
+  transform: rotate(180deg);
+}
+
+.sp-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 150px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  padding: 4px;
+}
+
+.sp-family {
+  position: relative;
+}
+
+.sp-family-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  gap: 16px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.sp-family-btn svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.sp-family--active .sp-family-btn {
+  background: #f0f4ff;
+  color: #0d6efd;
+}
+
+.sp-family--active .sp-family-btn svg {
+  color: #93c5fd;
+}
+
+.sp-submenu {
+  position: absolute;
+  top: -4px;
+  left: calc(100% + 6px);
+  min-width: 210px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 201;
+  padding: 4px;
+}
+
+.sp-sample-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  text-align: left;
+  width: 100%;
+  color: #374151;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  gap: 16px;
+}
+
+.sp-sample-btn:hover {
+  background: #f0f4ff;
+  color: #0d6efd;
+}
+
+.sp-sample-btn--active {
+  background: #f0f4ff;
+  color: #0d6efd;
+}
+
+.sp-sample-name {
+  font-weight: 400;
+}
+
+.sp-sample-len {
+  font-family: monospace;
+  font-size: 11px;
+  color: #adb5bd;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sp-sample-btn:hover .sp-sample-len,
+.sp-sample-btn--active .sp-sample-len {
+  color: #6ea8fe;
+}
+
+.sp-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
 
 /* Typography */
 .font-bold {
