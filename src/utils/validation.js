@@ -1,5 +1,27 @@
 // Validation utilities for form inputs
 
+export const validateStructure = (structure) => {
+    if (!structure) {
+        return 'Specify a dot-bracket structure.';
+    }
+    if (structure.length <= 5) {
+        return 'Structure must be longer than 5 characters.';
+    }
+    if (!/^[().]+$/.test(structure)) {
+        return 'Invalid dot-bracket structure.';
+    }
+    // Check balanced parentheses
+    let depth = 0;
+    for (const char of structure) {
+        if (char === '(') depth++;
+        if (char === ')') depth--;
+        if (depth < 0) return 'Invalid dot-bracket structure.';
+    }
+    if (depth !== 0) return 'Invalid dot-bracket structure.';
+
+    return null;
+};
+
 export const validateNumericRange = (value, min, max, fieldName) => {
     if (!value) {
         return `Specify a ${fieldName}.`;
