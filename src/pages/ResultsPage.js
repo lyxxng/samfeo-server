@@ -2,10 +2,9 @@
    - Copy structures and sequences to clipboard
    - Display figures of structures (stretch goal)
         - [x] Base pairing probability
-        - Secondary structure
+        - [ ] Secondary structure
 */
 
-import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Body from '../components/Body';
@@ -20,10 +19,6 @@ export default function ResultsPage() {
     const location = useLocation();
     const data = location.state;
     const navigate = useNavigate();
-
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
 
     const goBack = () => {
         navigate('/');
